@@ -1,12 +1,12 @@
-PredatH0r's Toxikk Mutator Pack
+PredatH0r's TOXIKK Mutator Pack
 ===
+
 Files needed to run the mutator (server or local game)
 ---
-SteamApps\common\TOXIKK\UDKGame\CookedPC\[MutatH0r.u](http://toxikk.beham.biz/MutatH0r.u)
-SteamApps\common\TOXIKK\UDKGame\Config\[UDKMutatH0r.ini](http://toxikk.beham.biz/UDKMutatH0r.ini)
+SteamApps\\common\\TOXIKK\\UDKGame\\CookedPC\\[MutatH0r.u](http://toxikk.beham.biz/MutatH0r.u)
+SteamApps\\common\\TOXIKK\\UDKGame\\Config\\[UDKMutatH0r.ini](http://toxikk.beham.biz/UDKMutatH0r.ini)
 
 The ini file settings are optimized for a server that runs a combination of Vampire + Regen/Decay + Stim Head.
-
 
 Included Mutators
 ---
@@ -59,4 +59,3 @@ Pulse Head
 ---
 Pulses a player's head size over time so you can get easier head shots, if you can time it right.
 
-<div style="height:1440px"/>
