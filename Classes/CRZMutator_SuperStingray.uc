@@ -112,11 +112,11 @@ defaultproperties
 
   TagDuration=1.0
   TagColor=(A=255.0, G=128.0, B=128.0)
-  DamageBall=10
-  DamageRadius=220
+  DamageBall=15
+  DamageRadius=150
   DamageBeam=45
   DamageCombo=65
-  KnockbackBall=30000
+  KnockbackBall=35000
   SelfDamage=false
   EnableCombos=false
 }
