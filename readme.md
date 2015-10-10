@@ -4,8 +4,8 @@ TOXIKK Mutator Pack
 
 **Files needed to run the mutator (server or local game):**
 
-SteamApps\\common\\TOXIKK\\UDKGame\\CookedPC\\[MutatH0r.u](http://toxikk.beham.biz/MutatH0r.u)
-SteamApps\\common\\TOXIKK\\UDKGame\\Config\\[UDKMutatH0r.ini](http://toxikk.beham.biz/UDKMutatH0r.ini)
+SteamApps\\common\\TOXIKK\\UDKGame\\CookedPC\\[MutatH0r.u](http://toxikk.beham.biz/toxikkredirect/MutatH0r.u)
+SteamApps\\common\\TOXIKK\\UDKGame\\Config\\[UDKMutatH0r.ini](http://toxikk.beham.biz/toxikkredirect/UDKMutatH0r.ini)
 
 The INI file settings are optimized for a server that runs a combination of Vampire + Regen/Decay + Stim Head.
 
