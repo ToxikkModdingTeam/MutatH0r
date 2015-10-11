@@ -25,7 +25,7 @@ The INI file settings are optimized for a server that runs a combination of Vamp
 <a name="ComboGib"/>
 ComboGib
 ---
-Stingray bounces players with either primary or secondary fire and tags them to be killed with the other.  
+Stingray bounces players with primary or secondary fire and tags them to be killed with the other.  
 After 2 seconds or when a player touches the ground he becomes untagged again.  
 Players get a green tag when they are hit with the beam. They can then be killed with a plasma ball.  
 Players get a yellow tag then when they are hit with 2 balls. They can then be killed with a beam.  

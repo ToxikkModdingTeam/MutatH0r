@@ -8,11 +8,14 @@
  
 class CRZMutator_ComboGib extends UTMutator config (MutatH0r);
  
+const BallDirectHitDamage = 10;
+
 var config float VolunerabilityDuration;
 var config int BallArmor; // number of ball hits needed to get volunerable to the beam
 var config float BallKnockbackHoriz, BallKnockbackVert, BallSweetSpotDistance, BallSweetSpotSpread, BallFireRate;
 var config float BeamKnockbackHoriz, BeamKnockbackVert, BeamSweetSpotDistance, BeamSweetSpotSpread, BeamFireRate;
 var config bool TeamMateTag, TeamMateKill, TeamMateUntag;
+var config float GravityZ;
 var float _BallFireRate, _BeamFireRate;
 
 var LinearColor VolunerabilityColorBeam;
@@ -29,6 +32,8 @@ function InitMutator(string Options, out string ErrorMessage)
   Super.InitMutator(Options, ErrorMessage);
   _BallFireRate = BallFireRate;
   _BeamFireRate = BeamFireRate;
+  if (GravityZ != 0)
+	  WorldInfo.WorldGravityZ = GravityZ;
 }
  
 simulated function PostBeginPlay()
@@ -66,7 +71,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
  
   if (string(DamageType) == "CRZDmgType_Scion_Plasma")
   {
-    Damage = (victim.RemainingBodyMatDuration >= 0 && victim.BodyMatColor == VolunerabilityColorBall) ? 1000.0 : 0.0;
+    Damage = (Damage >= BallDirectHitDamage && victim.RemainingBodyMatDuration >= 0 && victim.BodyMatColor == VolunerabilityColorBall) ? 1000.0 : 0.0;
     if (Damage == 1000.0)
     {
       if (TeamMateKill || !Injured.IsSameTeam(InstigatedBy.Pawn))
@@ -113,9 +118,12 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     sweetSpread = BeamSweetSpotSpread;
   }
  
-  n.X = (frand() - 0.5) * sweetSpread;
-  n.Y = (frand() - 0.5) * sweetSpread;
-  n.Z = (frand() - 0.5) * sweetSpread;
+  if (sweetSpread != 0)
+  {
+    n.X = (frand() - 0.5) * sweetSpread;
+    n.Y = (frand() - 0.5) * sweetSpread;
+    n.Z = (frand() - 0.5) * sweetSpread;
+  }
   sweetSpot = InstigatedBy.Pawn.Location + Normal(v) * sweetDistance + n;
  
   n = sweetSpot - Injured.Location;
@@ -136,12 +144,21 @@ simulated event Tick(float DeltaTime)
 {    
   local UTPawn P;
   local PlayerController PC;
-    
-  Super.Tick(Deltatime);
- 
+  local Projectile proj;
+     
   foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
     ReloadStingray(PC.Pawn);
  
+  foreach WorldInfo.DynamicActors(class'Projectile', proj)
+  {
+    if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != BallDirectHitDamage)
+    {
+      proj.Damage = BallDirectHitDamage;
+      proj.DamageRadius = 80;
+      proj.MomentumTransfer = 0;
+    }
+  }
+
   if (Role == ROLE_Authority)
   {
     foreach WorldInfo.AllPawns(class'UTPawn', P)
@@ -181,6 +198,7 @@ function Mutate(string value, PlayerController sender)
     `log("Ball: h=" $ BallKnockbackHoriz $ ", v=" $ BallKnockbackVert $ ", d=" $ BallSweetSpotDistance $ ", s=" $ BallSweetSpotSpread $ ", r=" $ _BallFireRate $ ", a=" $ BallArmor);
     `log("Beam: h=" $ BeamKnockbackHoriz $ ", v=" $ BeamKnockbackVert $ ", d=" $ BeamSweetSpotDistance $ ", s=" $ BeamSweetSpotSpread $ ", r=" $ _BeamFireRate);
     `log("Team: t=" $ TeamMateTag $ ", k=" $ TeamMateKill $ ", u=" $ TeamMateUntag);
+    `log("Grav=" $ WorldInfo.WorldGravityZ);
   }
   else if (Left(value, 3) == "bh ")
     BallKnockbackHoriz = float(Mid(value, 3));
@@ -210,6 +228,8 @@ function Mutate(string value, PlayerController sender)
     TeamMateKill = Mid(value, 3) != "0";
   else if (Left(value, 3) == "tu ")
     TeamMateUntag = Mid(value, 3) != "0";
+  else if (Left(Value, 5) == "grav ")
+    WorldInfo.WorldGravityZ = float(mid(Value, 5));
   else
     Super.Mutate(value, sender);
 }
