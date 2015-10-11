@@ -25,25 +25,25 @@ The INI file settings are optimized for a server that runs a combination of Vamp
 <a name="ComboGib"/>
 ComboGib
 ---
-Stingray bounces players with either primary or secondary fire and tags them to be killed with the other fire mode.
-<br>After 2 seconds or when a player touches the ground he becomes untagged again, so they can only be killed mid-air.
-<br>Players get a green tag when they are hit with the beam. They can then be killed with a plasma ball.
-<br>Players get a yellow tag then when they are hit with 2 balls. They can then be killed with a beam.
-<br>In SquadAssault you can untag your team mates with the shot that would normally kill them (green: ball, yellow: beam).
+Stingray bounces players with either primary or secondary fire and tags them to be killed with the other.  
+After 2 seconds or when a player touches the ground he becomes untagged again.  
+Players get a green tag when they are hit with the beam. They can then be killed with a plasma ball.  
+Players get a yellow tag then when they are hit with 2 balls. They can then be killed with a beam.  
+In SquadAssault you can untag your team mates with the shot that would normally kill them.
 
 
 <a name="Roq3t"/>
 Roq3t
 ---
-Direct rocket hits deal 120 damage, but any splash is reduced to 0.5x regular.
-Knockback is increased to 1.5x and self-damage is disabled.
-All of that can be configured individually in the INI.
+Direct rocket hits deal 120 damage, but any splash is reduced to 0.5x regular.  
+Knockback is increased to 1.5x and self-damage is disabled.  
+All of that can be configured individually in the INI.  
 
 
 <a name="SuperStingray"/>
 SuperStingray
 ---
-Stingray plasma ball is reduced to 10 dmg/hit (from 35) but it has splash damage and knockback.
+Stingray plasma ball is reduced to 15 dmg/hit (from 35) but it has splash damage and knockback.  
 This allows you to climb up walls!
 
 
@@ -56,14 +56,14 @@ When you deal damage, 75% of it is given to you as health.
 <a name="RegenDecay"/>
 Regen/Decay
 ---
-Allows to increase/decrease health and armor over time.
+Allows to increase/decrease health and armor over time.  
 Typical use cases are health/armor decay (if they are above 100/50) or automatic health regeneration.
 
 
 <a name="StimHead"/>
 Stim Head
 ---
-Extra health and armor makes you an easier target for head shots.
+Extra health and armor makes you an easier target for head shots.  
 Scales a player's head size by (health + armor)/100.
 
 
@@ -76,5 +76,6 @@ Pulses a player's head size over time so you can get easier head shots, if you c
 <a name="Loadout"/>
 Loadout
 ---
-Lets you spawn with certain weapons in your inventory.
+Lets you spawn with certain weapons in your inventory.  
+Also has options to set infinite ammo and/or disable regular weapon spawns.
 
