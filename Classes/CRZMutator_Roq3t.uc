@@ -44,20 +44,11 @@ simulated event Tick(float DeltaTime)
 {	
 	local UTPawn P;
 	local PlayerController PC;
-  local Projectile proj;
 	
 	Super.Tick(Deltatime);
 
 	foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
 		TweakCerberus(PC.Pawn);
-
-  /*
-	foreach WorldInfo.DynamicActors(class'Projectile', proj)
-	{
-    if (string(proj.Class) == "CRZProj_RocketLauncher")
-      proj.MomentumTransfer = 85000 * 1.5;
-	}
-  */
 
 	if (Role == ROLE_Authority)
 	{

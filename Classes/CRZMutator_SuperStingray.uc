@@ -8,19 +8,19 @@
 class CRZMutator_SuperStingray extends UTMutator config (MutatH0r);
 
 var float DamageBall, DamageBeam, DamageCombo;
-var float KnockbackBall, DamageRadius;
+var float KnockbackBall, DamageRadius, ExtraUpOthers;
 var float TagDuration;
 var LinearColor TagColor;
-var bool SelfDamage;
+var config float SelfDamageFactor, ExtraUpSelf;
 var bool EnableCombos;
 
-/*
+
 replication
 {
   if (bNetInitial && Role == ENetRole.ROLE_Authority)
-    DamageBall, DamageBeam, DamageCombo, KnockbackBall;
+    DamageBall, DamageRadius, KnockbackBall; // DamageBeam, DamageCombo, 
 }
-*/
+
 
 simulated event PreBeginPlay()
 {
@@ -69,8 +69,8 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   {
     isSelfDamage = Injured == InstigatedBy.Pawn;
 
-    if (!SelfDamage && isSelfDamage)
-      Damage = 0;
+    if (isSelfDamage)
+      Damage *= SelfDamageFactor;
 
     if (EnableCombos && !isSelfDamage)
     {
@@ -86,24 +86,29 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
     if (string(DamageType) == "CRZDmgType_Scion_Plasma")
     {
-      //Momentum *= 100;   
-      //Momentum.Z += 50;
+      Momentum.Z += isSelfDamage ? ExtraUpSelf : ExtraUpOthers;
     }
   }
 }
 
 
-/*
 function Mutate(string MutateString, PlayerController Sender)
 {  
   if (left(MutateString, 3) == "kb ")
     KnockbackBall = float(mid(MutateString, 3));
+  else if (left(MutateString, 3) == "up ")
+    ExtraUpOthers = float(mid(MutateString, 3));
+  else if (left(MutateString, 3) == "us ")
+    ExtraUpSelf = float(mid(MutateString, 3));
+  else if (left(MutateString, 3) == "dr ")
+    DamageRadius = float(mid(MutateString, 3));
   else if (left(MutateString, 3) == "db ")
     DamageBall = float(mid(MutateString, 3));
+  else if (left(MutateString, 3) == "sd ")
+    SelfDamageFactor = float(mid(MutateString, 3));
   else
     super.Mutate(MutateString, Sender);
 }
-*/
 
 defaultproperties
 {
@@ -112,11 +117,13 @@ defaultproperties
 
   TagDuration=1.0
   TagColor=(A=255.0, G=128.0, B=128.0)
-  DamageBall=15
-  DamageRadius=150
+  DamageBall=17
+  DamageRadius=120
   DamageBeam=45
   DamageCombo=65
-  KnockbackBall=35000
-  SelfDamage=false
+  KnockbackBall=20000
+  //ExtraUpSelf=50
+  ExtraUpOthers=200
+  //SelfDamageFactor=0
   EnableCombos=false
 }
