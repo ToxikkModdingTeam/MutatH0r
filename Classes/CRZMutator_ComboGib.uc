@@ -1,22 +1,23 @@
 // MutatH0r.CRZMutator_ComboGib
 // ----------------
-// Stingray only kills in combos with either prim+sec or sec+prim
-// Individual shots don't make damage, but bounce the victims around
+// Stingray only kills in combos with either prim+sec or sec+prim.
+// Individual shots don't make damage, but bounce the victims around.
+// Stingray plasma balls have some splash damage and allow plasma climbs.
 // ----------------
 // by PredatH0r
 //================================================================
  
 class CRZMutator_ComboGib extends UTMutator config (MutatH0r);
  
-const BallDirectHitDamage = 10;
+const BallDirectHitDamage = 17;
 
 var config float VolunerabilityDuration;
 var config int BallArmor; // number of ball hits needed to get volunerable to the beam
-var config float BallKnockbackHoriz, BallKnockbackVert, BallSweetSpotDistance, BallSweetSpotSpread, BallFireRate;
-var config float BeamKnockbackHoriz, BeamKnockbackVert, BeamSweetSpotDistance, BeamSweetSpotSpread, BeamFireRate;
 var config bool TeamMateTag, TeamMateKill, TeamMateUntag;
 var config float GravityZ;
-var float _BallFireRate, _BeamFireRate;
+
+var float BallFireRate, BeamFireRate, ExtraUpSelf;
+var float BallKnockbackVert, BeamKnockbackVert;
 
 var LinearColor VolunerabilityColorBeam;
 var LinearColor VolunerabilityColorBall;
@@ -24,14 +25,12 @@ var LinearColor VolunerabilityColorBall;
 replication
 {
   if ( (bNetInitial || bNetDirty) && Role == ROLE_Authority )
-    _BallFireRate, _BeamFireRate;
+    BallFireRate, BeamFireRate;
 }
  
 function InitMutator(string Options, out string ErrorMessage)
 {
   Super.InitMutator(Options, ErrorMessage);
-  _BallFireRate = BallFireRate;
-  _BeamFireRate = BeamFireRate;
   if (GravityZ != 0)
 	  WorldInfo.WorldGravityZ = GravityZ;
 }
@@ -54,9 +53,8 @@ simulated function PostBeginPlay()
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
   local UTPawn victim;
-  local vector v,n,sweetSpot;
-  local float d;
-  local float knockbackHoriz,knockbackVert,sweetDistance,sweetSpread;
+  local float knockbackVert;
+  local bool isSelfDamage;
  
   Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
  
@@ -66,35 +64,37 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   victim = UTPawn(Injured);
   if (victim == none || InstigatedBy == none || InstigatedBy.Pawn == none)
     return;
- 
-  v = Injured.Location - InstigatedBy.Pawn.Location;
+
+  isSelfDamage = Injured == InstigatedBy.Pawn;
  
   if (string(DamageType) == "CRZDmgType_Scion_Plasma")
   {
-    Damage = (Damage >= BallDirectHitDamage && victim.RemainingBodyMatDuration >= 0 && victim.BodyMatColor == VolunerabilityColorBall) ? 1000.0 : 0.0;
-    if (Damage == 1000.0)
+    if (isSelfDamage)
+      Damage = 0;
+    else
     {
-      if (TeamMateKill || !Injured.IsSameTeam(InstigatedBy.Pawn))
-        return;
-      if (TeamMateUntag)
+      Damage = (Damage >= BallDirectHitDamage && victim.RemainingBodyMatDuration >= 0 && victim.BodyMatColor == VolunerabilityColorBall) ? 1000.0 : 0.0;
+      if (Damage == 1000.0)
       {
-        Damage = 0;
-        victim.ClearBodyMatColor();
-        victim.VestArmor = BallArmor;
+        if (TeamMateKill || !Injured.IsSameTeam(InstigatedBy.Pawn))
+          return;
+        if (TeamMateUntag)
+        {
+          Damage = 0;
+          victim.ClearBodyMatColor();
+          victim.VestArmor = BallArmor;
+        }
       }
-    }
-    else if (TeamMateTag || !Injured.IsSameTeam(InstigatedBy.Pawn))
-    {
-      if (victim.VestArmor > 0)
-        victim.VestArmor = FMax(0, Victim.VestArmor - 1);
-      if (victim.VestArmor == 0)
-        victim.SetBodyMatColor(VolunerabilityColorBeam, VolunerabilityDuration);
-    }
+      else if (TeamMateTag || !Injured.IsSameTeam(InstigatedBy.Pawn))
+      {
+        if (victim.VestArmor > 0)
+          victim.VestArmor = FMax(0, Victim.VestArmor - 1);
+        if (victim.VestArmor == 0)
+          victim.SetBodyMatColor(VolunerabilityColorBeam, VolunerabilityDuration);
+      }
  
-    knockbackHoriz = BallKnockbackHoriz;
-    knockbackVert = BallKnockbackVert;
-    sweetDistance = BallSweetSpotDistance;
-    sweetSpread = BallSweetSpotSpread; 
+      knockbackVert = BallKnockbackVert;
+    }
   }
   else
   {
@@ -112,31 +112,12 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     else if (TeamMateTag || !Injured.IsSameTeam(InstigatedBy.Pawn))
       victim.SetBodyMatColor(VolunerabilityColorBall, VolunerabilityDuration);
 
-    knockbackHoriz = BeamKnockbackHoriz;
     knockbackVert = BeamKnockbackVert;
-    sweetDistance = BeamSweetSpotDistance;
-    sweetSpread = BeamSweetSpotSpread;
   }
  
-  if (sweetSpread != 0)
-  {
-    n.X = (frand() - 0.5) * sweetSpread;
-    n.Y = (frand() - 0.5) * sweetSpread;
-    n.Z = (frand() - 0.5) * sweetSpread;
-  }
-  sweetSpot = InstigatedBy.Pawn.Location + Normal(v) * sweetDistance + n;
- 
-  n = sweetSpot - Injured.Location;
-  n.Z = 0;
-  d = VSize(n);
-  if (d > knockbackHoriz)
-    n = Normal(n) * knockbackHoriz;
-    
-  Momentum.X = n.X;
-  Momentum.Y = n.Y;
-  Momentum.Z = knockbackVert;
- 
-  Momentum -= victim.Velocity/2;
+  Momentum.Z += isSelfDamage ? ExtraUpSelf : knockbackVert;
+  if (Damage == 0)
+    Damage = 0.1; // otherwise there would be no knockback
 }
  
 
@@ -154,8 +135,8 @@ simulated event Tick(float DeltaTime)
     if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != BallDirectHitDamage)
     {
       proj.Damage = BallDirectHitDamage;
-      proj.DamageRadius = 80;
-      proj.MomentumTransfer = 0;
+      proj.DamageRadius = 120;
+      proj.MomentumTransfer = 20000;
     }
   }
 
@@ -185,8 +166,8 @@ simulated function ReloadStingray(Pawn P)
   {
     W.ShotCost[0] = 0;
     W.ShotCost[1] = 0;
-    W.FireInterval[0] = _BallFireRate;
-    W.FireInterval[1] = _BeamFireRate;
+    W.FireInterval[0] = BallFireRate;
+    W.FireInterval[1] = BeamFireRate;
   }               
 }
  
@@ -195,33 +176,17 @@ function Mutate(string value, PlayerController sender)
 {
   if (value == "i")
   {
-    `log("Ball: h=" $ BallKnockbackHoriz $ ", v=" $ BallKnockbackVert $ ", d=" $ BallSweetSpotDistance $ ", s=" $ BallSweetSpotSpread $ ", r=" $ _BallFireRate $ ", a=" $ BallArmor);
-    `log("Beam: h=" $ BeamKnockbackHoriz $ ", v=" $ BeamKnockbackVert $ ", d=" $ BeamSweetSpotDistance $ ", s=" $ BeamSweetSpotSpread $ ", r=" $ _BeamFireRate);
+    `log("Ball: v=" $ BallKnockbackVert $ ", r=" $ BallFireRate $", a=" $ BallArmor);
+    `log("Beam: v=" $ BeamKnockbackVert $ ", r=" $ BeamFireRate);
     `log("Team: t=" $ TeamMateTag $ ", k=" $ TeamMateKill $ ", u=" $ TeamMateUntag);
     `log("Grav=" $ WorldInfo.WorldGravityZ);
   }
-  else if (Left(value, 3) == "bh ")
-    BallKnockbackHoriz = float(Mid(value, 3));
   else if (Left(value, 3) == "bv ")
     BallKnockbackVert = float(Mid(value, 3));
-  else if (Left(value, 3) == "bd ")
-    BallSweetSpotDistance = float(Mid(value, 3));
-  else if (Left(value, 3) == "bs ")
-    BallSweetSpotSpread = float(Mid(value, 3));
-  else if (Left(value, 3) == "br ")
-    _BallFireRate = float(Mid(value, 3));
   else if (Left(value, 3) == "ba ")
     BallArmor = float(Mid(value, 3));
-  else if (Left(value, 3) == "rh ")
-    BeamKnockbackHoriz = float(Mid(value, 3));
   else if (Left(value, 3) == "rv ")
     BeamKnockbackVert = float(Mid(value, 3));
-  else if (Left(value, 3) == "rd ")
-    BeamSweetSpotDistance = float(Mid(value, 3));
-  else if (Left(value, 3) == "rs ")
-    BeamSweetSpotSpread = float(Mid(value, 3));
-  else if (Left(value, 3) == "rr ")
-    _BeamFireRate = float(Mid(value, 3));
   else if (Left(value, 3) == "tt ")
     TeamMateTag = Mid(value, 3) != "0";
   else if (Left(value, 3) == "tk ")
@@ -239,4 +204,10 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
+
+  BallFireRate=0.1667
+  BallKnockbackVert=200
+  BeamFireRate=0.5
+  BeamKnockbackVert=550
+  ExtraUpSelf=50
 }
