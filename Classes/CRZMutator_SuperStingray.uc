@@ -15,9 +15,10 @@ struct TaggedPawnInfo
 };
 
 var config float DamagePlasma, DamageBeam, DamageCombo;
-var config float KnockbackPlasma, DamageRadius;
+var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var config float TagDuration;
 var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
+var config float FireIntervalPlasma, FireIntervalBeam;
 var array<TaggedPawnInfo> TaggedPawns;
 var LinearColor TagColor;
 
@@ -25,18 +26,20 @@ var LinearColor TagColor;
 replication
 {
   if (bNetInitial && Role == ENetRole.ROLE_Authority)
-    DamagePlasma, DamageRadius, KnockbackPlasma; // DamageBeam, DamageCombo, 
+    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DamageCombo;
 }
 
-simulated event PreBeginPlay()
+simulated event PostBeginPlay()
 {
-  super.PreBeginPlay();
+  super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
 }
 
 simulated function Tick(float DeltaTime)
 {
+  local PlayerController pc;
+  local UTWeapon w;
   local Projectile proj; 
   local int i;
 
@@ -58,6 +61,17 @@ simulated function Tick(float DeltaTime)
       proj.Damage = DamagePlasma;
       proj.DamageRadius = DamageRadius;
       proj.MomentumTransfer = KnockbackPlasma;
+    }
+  }
+
+  pc=GetALocalPlayerController();
+  if (pc != none)
+  {
+    w = UTWeapon(pc.Pawn.Weapon);
+    if (string(w.Class) == "CRZWeap_ScionRifle")
+    {
+      w.FireInterval[0] = FireIntervalPlasma;
+      w.FireInterval[1] = FireIntervalBeam;
     }
   }
 }
@@ -123,6 +137,8 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     {
       Momentum.Z += isSelfDamage ? LevitationSelf : LevitationOthers;
     }
+    else if (KnockbackBeam != 0 && InstigatedBy != none)
+      Momentum += normal(Injured.Location - InstigatedBy.Pawn.Location) * KnockbackBeam;
   }
 }
 
@@ -143,12 +159,60 @@ function Mutate(string MutateString, PlayerController Sender)
   local string msg;
   if (MutateString == "sr_info")
   {
-    msg = "Plasma: dp=" $ DamagePlasma $ ", dr=" $ DamageRadius $ ", dfs=" $ DamageFactorSplash $ ", dfi=" $ DamageFactorSelf $ ", kbp=" $ KnockbackPlasma;
+    msg = "Plasma: dp=" $ DamagePlasma $ ", fi=" $ FireIntervalPlasma $ ", dr=" $ DamageRadius $ ", dfs=" $ DamageFactorSplash $ ", dfi=" $ DamageFactorSelf $ ", kbp=" $ KnockbackPlasma;
     `log(msg); Sender.ClientMessage(msg, 'Info');
-    msg = "Beam:   db=" $ DamageBeam $ ", dc=" $ DamageCombo $ ", td=" $ TagDuration;
+    msg = "Beam:   db=" $ DamageBeam $ ", fi=" $ FireIntervalBeam $ ", dc=" $ DamageCombo $ ", td=" $ TagDuration $ ", kbb= " $ KnockbackBeam;
     `log(msg); Sender.ClientMessage(msg, 'Info');
     msg = "Levitation: lo=" $ LevitationOthers $ ", ls=" $ LevitationSelf;
     `log(msg); Sender.ClientMessage(msg, 'Info');
+  }
+  else if (MutateString == "sr_0")
+  {
+    DamagePlasma = 35;
+    DamageRadius = 0;
+    DamageFactorSplash = 0;
+    DamageFactorSelf = 0;
+    KnockbackPlasma = 0;
+    KnockbackBeam = 0;
+    DamageBeam = 45;
+    DamageCombo = 0;
+    TagDuration = 0;
+    LevitationSelf = 0;
+    LevitationOthers = 0;
+    FireIntervalPlasma = 0.1667;
+    FireIntervalBeam = 0.85;
+  }
+  else if (MutateString == "sr_1")
+  {
+    DamagePlasma = 17;
+    DamageRadius = 120;
+    DamageFactorSplash = 1.0;
+    DamageFactorSelf = 1.0;
+    KnockbackPlasma = 20000;
+    KnockbackBeam = 0;
+    DamageBeam = 45;
+    DamageCombo = 3;
+    TagDuration = 2;
+    LevitationSelf = 50;
+    LevitationOthers = 100;
+    FireIntervalPlasma = 0.1667;
+    FireIntervalBeam = 0.85;
+  }
+  else if (MutateString == "sr_2")
+  {
+    DamagePlasma = 17;
+    DamageRadius = 120;
+    DamageFactorSplash = 1.0;
+    DamageFactorSelf = 1.0;
+    KnockbackPlasma = 20000;
+    KnockbackBeam = 200;
+    DamageBeam = 30;
+    DamageCombo = 13;
+    TagDuration = 1.5;
+    LevitationSelf = 50;
+    LevitationOthers = 100;
+    FireIntervalPlasma = 0.1667;
+    FireIntervalBeam = 0.5;
   }
   else if (left(MutateString, 6) == "sr_dp ")
     DamagePlasma = float(mid(MutateString, 6));
@@ -160,6 +224,8 @@ function Mutate(string MutateString, PlayerController Sender)
     DamageFactorSelf = float(mid(MutateString, 7));
   else if (left(MutateString, 7) == "sr_kbp ")
     KnockbackPlasma = float(mid(MutateString, 7));
+  else if (left(MutateString, 7) == "sr_kbb ")
+    KnockbackBeam = float(mid(MutateString, 7));
   else if (left(MutateString, 6) == "sr_db ")
     DamageBeam = float(mid(MutateString, 6));
   else if (left(MutateString, 6) == "sr_dc ")
@@ -170,6 +236,10 @@ function Mutate(string MutateString, PlayerController Sender)
     LevitationSelf = float(mid(MutateString, 6));
   else if (left(MutateString, 6) == "sr_lo ")
     LevitationOthers = float(mid(MutateString, 6));
+  else if (left(MutateString, 7) == "sr_fip ")
+    FireIntervalPlasma = float(mid(MutateString, 7));
+  else if (left(MutateString, 7) == "sr_fib ")
+    FireIntervalBeam = float(mid(MutateString, 7));
   else
     super.Mutate(MutateString, Sender);
 }

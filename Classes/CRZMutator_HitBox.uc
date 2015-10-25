@@ -18,22 +18,22 @@ var bool Enabled;
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetDirty || bNetInitial))
-    DrawCylinder, SplashRadius1, SplashRadius2;
+    Enabled, DrawCylinder, SplashRadius1, SplashRadius2;
 }
 
 function InitMutator(string Options, out string ErrorMessage)
 {
-	Super.InitMutator(Options, ErrorMessage);
-
   Enabled = true;
 	DrawCylinder = true;
   SplashRadius1 = Radius1;
   SplashRadius2 = Radius2;
+
+	super.InitMutator(Options, ErrorMessage);
 }
 
-simulated function PreBeginPlay()
+simulated function PostBeginPlay()
 {
-  base.PreBeginPlay();
+  super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PostUpdateWork);
   Enable('Tick');
 }
@@ -73,7 +73,7 @@ simulated function Tick(float DeltaTime)
 				16, 0, 255, 255, false);
     }
 
-		if (DrawCylinder && PlayerController(P.Controller) == none)
+		if (DrawCylinder && PlayerController(P.Controller) != GetALocalPlayerController())
 		{
 			P.DrawDebugCylinder(
 				pos + vect(0,0,1) * height, 
@@ -203,5 +203,6 @@ function DummyMove()
 
 defaultproperties
 {
-	GroupNames[0]="HITBOX";
+	RemoteRole=ROLE_SimulatedProxy
+	bAlwaysRelevant=true
 }

@@ -17,7 +17,7 @@ replication
 
 simulated function PostBeginPlay()
 {
-	Super.PostBeginPlay();
+	super.PostBeginPlay();
 
 	SetTickGroup(ETickingGroup.TG_PreAsyncWork);
 	Enable('Tick');
@@ -27,7 +27,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 {
   local float knockbackFactorVert;
 
-	Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
+	super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
 	if (string(DamageType) != "CRZDmgType_RocketLauncher")
 		return;
