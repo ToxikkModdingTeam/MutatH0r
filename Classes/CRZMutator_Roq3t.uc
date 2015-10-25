@@ -6,7 +6,7 @@
 
 class CRZMutator_Roq3t extends UTMutator config (MutatH0r);
 
-var config float KnockbackFactorHoriz, KnockbackFactorVert, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
+var config float KnockbackFactorHoriz, KnockbackFactorVertOthers, KnockbackFactorVertSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var config float DamageFactorSelf;
 
 replication
@@ -25,6 +25,8 @@ simulated function PostBeginPlay()
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
+  local float knockbackFactorVert;
+
 	Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
 	if (string(DamageType) != "CRZDmgType_RocketLauncher")
@@ -32,12 +34,16 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
 	Damage *= Damage >= 100 ? DamageFactorDirect : DamageFactorSplash;
 	if (Injured == InstigatedBy.Pawn)
+	{
 		Damage *= DamageFactorSelf;
-
+    knockbackFactorVert = KnockbackFactorVertSelf;
+	}
+  else
+    knockbackFactorVert = KnockbackFactorVertOthers;
   
 	Momentum.X = Momentum.X * KnockbackFactorHoriz;
 	Momentum.Y = Momentum.Y * KnockbackFactorHoriz;
-	Momentum.Z = FClamp(Momentum.Z * KnockbackFactorVert, MinKnockbackVert, MaxKnockbackVert);	
+	Momentum.Z = FClamp(Momentum.Z * knockbackFactorVert, MinKnockbackVert, MaxKnockbackVert);	
 }
 
 simulated event Tick(float DeltaTime)
@@ -70,34 +76,75 @@ function TweakCerberus(Pawn p)
 		p.Health = 100;
 }
 
-/*
 function Mutate(string value, PlayerController sender)
 {
-	if (value == "i")
+  local string msg;
+
+	if (value == "ro_info")
 	{
-		`log("kfh=" $ KnockbackFactorHoriz $ ", khv=" $ KnockbackFactorVert $ ", min=" $ MinKnockbackVert $ ", max=" $ MaxKnockbackVert $ ", fi=" $ FireInterval);
-		`log("dfd=" $ DamageFactorDirect $ ", dfs=" $DamageFactorSplash $ ", dfi=" $ DamageFactorSelf);
+    msg = "kfh=" $ KnockbackFactorHoriz $ ", kfvs=" $ KnockbackFactorVertSelf $ ", kfvo=" $ KnockbackFactorVertOthers $ ", min=" $ MinKnockbackVert $ ", max=" $ MaxKnockbackVert $ ", fi=" $ FireInterval;
+		`log(msg); sender.ClientMessage(msg, 'Info');
+    msg = "dfd=" $ DamageFactorDirect $ ", dfs=" $DamageFactorSplash $ ", dfi=" $ DamageFactorSelf;
+		`log(msg); sender.ClientMessage(msg, 'Info');
 	}
-	else if (Left(value, 4) == "kfh ")
-		KnockbackFactorHoriz = float(Mid(value, 4));
-	else if (Left(value, 4) == "kfv ")
-		KnockbackFactorVert = float(Mid(value, 4));
-	else if (Left(value, 4) == "min ")
-		MinKnockbackVert = float(Mid(value, 4));
-	else if (Left(value, 4) == "max ")
-		MaxKnockbackVert = float(Mid(value, 4));
-	else if (Left(value, 3) == "fi ")
-		FireInterval = float(Mid(value, 3));
-	else if (Left(value, 4) == "dfd ")
-		DamageFactorDirect = float(Mid(value, 4));
-	else if (Left(value, 4) == "dfs ")
-		DamageFactorSplash = float(Mid(value, 4));
-	else if (Left(value, 4) == "dfi ")
-		DamageFactorSelf = float(Mid(value, 4));
+	else if (Left(value, 7) == "ro_kfh ")
+		KnockbackFactorHoriz = float(Mid(value, 7));
+	else if (Left(value, 8) == "ro_kfvs ")
+		KnockbackFactorVertSelf = float(Mid(value, 8));
+	else if (Left(value, 8) == "ro_kfvo ")
+		KnockbackFactorVertOthers = float(Mid(value, 8));
+	else if (Left(value, 7) == "ro_min ")
+		MinKnockbackVert = float(Mid(value, 7));
+	else if (Left(value, 7) == "ro_max ")
+		MaxKnockbackVert = float(Mid(value, 7));
+	else if (Left(value, 6) == "ro_fi ")
+		FireInterval = float(Mid(value, 6));
+	else if (Left(value, 7) == "ro_dfd ")
+		DamageFactorDirect = float(Mid(value, 7));
+	else if (Left(value, 7) == "ro_dfs ")
+		DamageFactorSplash = float(Mid(value, 7));
+	else if (Left(value, 7) == "ro_dfi ")
+		DamageFactorSelf = float(Mid(value, 7));
+  else if (value == "ro_0")
+  {
+    KnockbackFactorHoriz = 1.0;
+    KnockbackFactorVertSelf = 1.0;
+    KnockbackFactorVertOthers = 1.0;
+    MinKnockbackVert = 0.0;
+    MaxKnockbackVert = 1000000.0;
+    FireInterval = 1.0;
+    DamageFactorDirect = 1.0;
+    DamageFactorSplash = 1.0;
+    DamageFactorSelf = 1.0;
+  }
+  else if (value == "ro_1")
+  {
+    KnockbackFactorHoriz = 1.0;
+    KnockbackFactorVertSelf = 1.25;
+    KnockbackFactorVertOthers = 0.5;
+    MinKnockbackVert = 0.0;
+    MaxKnockbackVert = 1000000.0;
+    FireInterval = 1.1;
+    DamageFactorDirect = 1.0;
+    DamageFactorSplash = 0.5;
+    DamageFactorSelf = 2.0; // combines with Splash factor to 1.0
+  }
+  else if (value == "ro_1")
+  {
+    KnockbackFactorHoriz = 0.75;
+    KnockbackFactorVertOthers = 0.75;
+    KnockbackFactorVertSelf = 1.25;
+    MinKnockbackVert = 0.0;
+    MaxKnockbackVert = 100000.0;
+    FireInterval = 1.1;
+    DamageFactorDirect = 1.0;
+    DamageFactorSplash = 1.0;
+    DamageFactorSelf = 1.0;
+  }
 	else
 		Super.Mutate(value, sender);
 }
-*/
+
 
 defaultproperties
 {

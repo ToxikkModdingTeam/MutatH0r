@@ -43,7 +43,7 @@ All of that can be configured individually in the INI.
 <a name="SuperStingray"/>
 SuperStingray
 ---
-Stingray plasma ball is reduced to 15 dmg/hit (from 35) but it has splash damage and knockback.  
+Stingray plasma ball is reduced to 17 dmg/hit (from 35) but it has splash damage and knockback.  
 This allows you to climb up walls!
 
 

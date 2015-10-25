@@ -1,26 +1,32 @@
 // MutatH0r.CRZMutator_SuperStingray
 // ----------------
-// Little plasma ball damage, but splash damage and strong knockback
+// Less damage per plasma ball, but splash damage and levitation effect
 // ----------------
 // by PredatH0r
 //================================================================
 
 class CRZMutator_SuperStingray extends UTMutator config (MutatH0r);
 
-var float DamageBall, DamageBeam, DamageCombo;
-var float KnockbackBall, DamageRadius, ExtraUpOthers;
-var float TagDuration;
+struct TaggedPawnInfo
+{
+  var Pawn Pawn;
+  var float ExpirationTime;
+  var float ComboExtraDamage;
+};
+
+var config float DamagePlasma, DamageBeam, DamageCombo;
+var config float KnockbackPlasma, DamageRadius;
+var config float TagDuration;
+var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
+var array<TaggedPawnInfo> TaggedPawns;
 var LinearColor TagColor;
-var config float SelfDamageFactor, ExtraUpSelf;
-var bool EnableCombos;
 
 
 replication
 {
   if (bNetInitial && Role == ENetRole.ROLE_Authority)
-    DamageBall, DamageRadius, KnockbackBall; // DamageBeam, DamageCombo, 
+    DamagePlasma, DamageRadius, KnockbackPlasma; // DamageBeam, DamageCombo, 
 }
-
 
 simulated event PreBeginPlay()
 {
@@ -31,15 +37,27 @@ simulated event PreBeginPlay()
 
 simulated function Tick(float DeltaTime)
 {
-  local Projectile proj;
+  local Projectile proj; 
+  local int i;
 
+  // clean up list of pawns tagged for combo-damage
+  for (i=0; i<TaggedPawns.Length; i++)
+  {
+    if (WorldInfo.TimeSeconds >= TaggedPawns[i].ExpirationTime)
+    {
+      TaggedPawns.Remove(i, 1);
+      --i;
+    }
+  }
+
+  // tweak plasma Plasmas
   foreach WorldInfo.DynamicActors(class'Projectile', proj)
   {
-    if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != DamageBall)
+    if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != DamagePlasma)
     {
-      proj.Damage = DamageBall;
+      proj.Damage = DamagePlasma;
       proj.DamageRadius = DamageRadius;
-      proj.MomentumTransfer = KnockbackBall;
+      proj.MomentumTransfer = KnockbackPlasma;
     }
   }
 }
@@ -62,50 +80,96 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 {
   local UTPawn victim;
   local bool isSelfDamage;
+  local int tagInfoIndex;
+  local TaggedPawnInfo tagInfo;
 
   Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
   if (instr(string(DamageType), "CRZDmgType_Scion") >=0)
   {
+    victim = UTPawn(Injured);
     isSelfDamage = Injured == InstigatedBy.Pawn;
 
-    if (isSelfDamage)
-      Damage *= SelfDamageFactor;
-
-    if (EnableCombos && !isSelfDamage)
+    if (!isSelfDamage && DamageCombo != 0 && TagDuration != 0)
     {
-      victim = UTPawn(Injured);
+      tagInfoIndex = GetTaggedPawnInfoIndex(victim);
+      if (tagInfoIndex >= 0)
+        tagInfo = TaggedPawns[tagInfoIndex];
+
       if (string(DamageType) == "CRZDmgType_Scion_Plasma")
-        victim.SetBodyMatColor(TagColor, TagDuration);
-      else if (string(DamageType) == "CRZDmgType_Scion_Rifle")
       {
-        if (victim.BodyMatColor == TagColor && victim.RemainingBodyMatDuration >= 0)
-          Damage = DamageCombo;
+        tagInfo.ExpirationTime = WorldInfo.TimeSeconds + TagDuration;
+        tagInfo.ComboExtraDamage += DamageCombo;
+        if (tagInfoIndex < 0)
+        {
+          tagInfo.Pawn = Injured;
+          TaggedPawns.Add(1);
+          tagInfoIndex = TaggedPawns.Length - 1;
+        }
+        TaggedPawns[tagInfoIndex] = tagInfo;
+        victim.SetBodyMatColor(TagColor, TagDuration);
+
+        if (Damage != DamagePlasma)
+          Damage *= DamageFactorSplash;
       }
+      else if (string(DamageType) == "CRZDmgType_ScionRifle")
+        Damage += tagInfo.ComboExtraDamage;
     }
+
+    if (isSelfDamage)
+      Damage *= DamageFactorSelf;
 
     if (string(DamageType) == "CRZDmgType_Scion_Plasma")
     {
-      Momentum.Z += isSelfDamage ? ExtraUpSelf : ExtraUpOthers;
+      Momentum.Z += isSelfDamage ? LevitationSelf : LevitationOthers;
     }
   }
 }
 
+function int GetTaggedPawnInfoIndex(Pawn pawn)
+{
+  local int i;
+  for (i=0; i<TaggedPawns.Length; i++)
+  {
+    if (TaggedPawns[i].Pawn == pawn)
+      return i;
+  }
+  return -1;
+}
+
 
 function Mutate(string MutateString, PlayerController Sender)
-{  
-  if (left(MutateString, 3) == "kb ")
-    KnockbackBall = float(mid(MutateString, 3));
-  else if (left(MutateString, 3) == "up ")
-    ExtraUpOthers = float(mid(MutateString, 3));
-  else if (left(MutateString, 3) == "us ")
-    ExtraUpSelf = float(mid(MutateString, 3));
-  else if (left(MutateString, 3) == "dr ")
-    DamageRadius = float(mid(MutateString, 3));
-  else if (left(MutateString, 3) == "db ")
-    DamageBall = float(mid(MutateString, 3));
-  else if (left(MutateString, 3) == "sd ")
-    SelfDamageFactor = float(mid(MutateString, 3));
+{
+  local string msg;
+  if (MutateString == "sr_info")
+  {
+    msg = "Plasma: dp=" $ DamagePlasma $ ", dr=" $ DamageRadius $ ", dfs=" $ DamageFactorSplash $ ", dfi=" $ DamageFactorSelf $ ", kbp=" $ KnockbackPlasma;
+    `log(msg); Sender.ClientMessage(msg, 'Info');
+    msg = "Beam:   db=" $ DamageBeam $ ", dc=" $ DamageCombo $ ", td=" $ TagDuration;
+    `log(msg); Sender.ClientMessage(msg, 'Info');
+    msg = "Levitation: lo=" $ LevitationOthers $ ", ls=" $ LevitationSelf;
+    `log(msg); Sender.ClientMessage(msg, 'Info');
+  }
+  else if (left(MutateString, 6) == "sr_dp ")
+    DamagePlasma = float(mid(MutateString, 6));
+  else if (left(MutateString, 6) == "sr_dr ")
+    DamageRadius = float(mid(MutateString, 6));
+  else if (left(MutateString, 7) == "sr_dfs ")
+    DamageFactorSplash = float(mid(MutateString, 7));
+  else if (left(MutateString, 7) == "sr_dfi ")
+    DamageFactorSelf = float(mid(MutateString, 7));
+  else if (left(MutateString, 7) == "sr_kbp ")
+    KnockbackPlasma = float(mid(MutateString, 7));
+  else if (left(MutateString, 6) == "sr_db ")
+    DamageBeam = float(mid(MutateString, 6));
+  else if (left(MutateString, 6) == "sr_dc ")
+    DamageCombo = float(mid(MutateString, 6));
+  else if (left(MutateString, 6) == "sr_td ")
+    TagDuration = float(mid(MutateString, 6));
+  else if (left(MutateString, 6) == "sr_ls ")
+    LevitationSelf = float(mid(MutateString, 6));
+  else if (left(MutateString, 6) == "sr_lo ")
+    LevitationOthers = float(mid(MutateString, 6));
   else
     super.Mutate(MutateString, Sender);
 }
@@ -115,15 +179,14 @@ defaultproperties
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
 
-  TagDuration=1.0
-  TagColor=(A=255.0, G=128.0, B=128.0)
-  DamageBall=17
-  DamageRadius=120
-  DamageBeam=45
-  DamageCombo=65
-  KnockbackBall=20000
-  //ExtraUpSelf=50
-  ExtraUpOthers=200
+  //TagDuration=1.0
+  TagColor=(A=255.0, R=0.0, G=128.0, B=0.0)
+  //DamagePlasma=17
+  //DamageRadius=120
+  //DamageBeam=50
+  //DamageCombo=50
+  //KnockbackPlasma=20000
+  //LevitationSelf=50
+  //ExtraUpOthers=100
   //SelfDamageFactor=0
-  EnableCombos=false
 }
