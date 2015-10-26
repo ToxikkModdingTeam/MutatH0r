@@ -259,6 +259,7 @@ function Mutate(string MutateString, PlayerController sender)
 
 function ShowHelp(PlayerController pc)
 {
+  pc.ClientMessage("mutate ro DrawDamageRadius 0/1", 'Info');
   pc.ClientMessage("mutate ro [setting] [value]: change [setting] to [value] (see 'mutate ro info')", 'Info');
   pc.ClientMessage("mutate ro info: show current Stingray settings", 'Info');
   pc.ClientMessage("mutate ro preset 3: reload=0.85, splash=0.5, self-bounce: 1.25, other-bounce=0.75", 'Info');

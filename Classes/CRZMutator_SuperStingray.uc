@@ -355,6 +355,7 @@ function Mutate(string MutateString, PlayerController Sender)
 function ShowHelp(PlayerController pc)
 {
   // reverse order for chat log
+  pc.ClientMessage("mutate sr DrawDamageRadius 0/1", 'Info');
   pc.ClientMessage("mutate sr [setting] [value]: change [setting] to [value] (see 'mutate sr info')", 'Info');
   pc.ClientMessage("mutate sr info: show current Stingray settings", 'Info');
   pc.ClientMessage("mutate sr preset 2: plasma=17, combo bonus=13, beam=30 with faster reload", 'Info');
