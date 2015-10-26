@@ -19,28 +19,18 @@ var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var config float TagDuration;
 var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
 var config float FireIntervalPlasma, FireIntervalBeam;
-var array<TaggedPawnInfo> TaggedPawns;
+var bool receivedWelcomeMessage;
 var LinearColor TagColor;
+var bool DrawDamageRadius;
+
+// server only
+var array<TaggedPawnInfo> TaggedPawns;
 
 
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam;
-}
-
-function NotifyLogin(Controller newPlayer)
-{
-  local PlayerController pc;
-
-  super.NotifyLogin(newPlayer);
-
-  pc = PlayerController(newPlayer);
-  if (pc != none)
-  {
-    //ShowInfo(pc);
-    pc.ClientMessage("<font color='#00ffff'>SuperStingray mutator</font>: Use console command <font color='#00ffff'>mutate sr help</font> to modify the Stingray.");
-  }
+    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DrawDamageRadius;
 }
 
 simulated event PostBeginPlay()
@@ -48,17 +38,43 @@ simulated event PostBeginPlay()
   super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
-  SetTimer(1.0);
+
+  DrawDamageRadius=true;
+  Mutate("sr preset 1", none);
+
+  // in NM_Standalone, messages aren't printed at this time, so set a timer
+  if (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone) 
+    SetTimer(1.0, true, 'ShowWelcomeMessage');
+  
+  if (Role == ROLE_Authority)
+    SetTimer(1.0, true, 'CleanupTaggedPawns');
 }
 
-function Timer()
+simulated function ShowWelcomeMessage()
+{
+  local PlayerController pc;
+
+  if (receivedWelcomeMessage)
+    return;
+
+  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
+  {
+    pc.ClientMessage("Use console command <font color='#00ffff'>mutate sr help</font> to modify the <font color='#00ffff'>Stingray</font>.");
+    receivedWelcomeMessage = true;
+  }
+
+  if (receivedWelcomeMessage)
+    ClearTimer('ShowWelcomeMessage');
+}
+
+function CleanupTaggedPawns()
 {
   local int i;
 
   // clean up list of pawns tagged for combo-damage
   for (i=0; i<TaggedPawns.Length; i++)
   {
-    if (WorldInfo.TimeSeconds >= TaggedPawns[i].ExpirationTime)
+    if (TaggedPawns[i].ExpirationTime < WorldInfo.TimeSeconds)
     {
       TaggedPawns.Remove(i, 1);
       --i;
@@ -70,7 +86,8 @@ simulated function Tick(float DeltaTime)
 {
   local PlayerController pc;
   local UTPawn p;
-  local Projectile proj; 
+  local Projectile proj;
+  local Vector v;
 
   // modify fire interval
   if (Role == ROLE_Authority)
@@ -92,6 +109,16 @@ simulated function Tick(float DeltaTime)
       proj.Damage = DamagePlasma;
       proj.DamageRadius = DamageRadius;
       proj.MomentumTransfer = KnockbackPlasma;
+    }
+  }
+
+  // draw splash radius
+  if (DrawDamageRadius && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone))
+  {
+    foreach WorldInfo.DynamicActors(class'UTPawn', P)
+    {
+      v = P.CylinderComponent.GetPosition() + vect(0,0,-1) * P.CylinderComponent.CollisionHeight;
+      P.DrawDebugCylinder(v, v, P.CylinderComponent.CollisionRadius + DamageRadius, 16, 0, 255, 255, false);
     }
   }
 }
@@ -131,10 +158,11 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     if (!isSelfDamage && DamageCombo != 0 && TagDuration != 0)
     {
       tagInfoIndex = GetTaggedPawnInfoIndex(victim);
+      //`log("Target was" $ (tagInfoIndex < 0 ? " NOT " : "") $ " tagged before");
       if (tagInfoIndex >= 0)
       {
         tagInfo = TaggedPawns[tagInfoIndex];
-        if (tagInfo.ExpirationTime > WorldInfo.TimeSeconds)
+        if (tagInfo.ExpirationTime < WorldInfo.TimeSeconds)
           tagInfo.ComboExtraDamage = 0;
       }
       else
@@ -152,7 +180,10 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
           Damage *= DamageFactorSplash;
       }
       else if (string(DamageType) == "CRZDmgType_ScionRifle")
+      {
+        `log("Added bonus damage: " $ tagInfo.ComboExtraDamage);
         Damage += tagInfo.ComboExtraDamage;
+      }
  
       TaggedPawns[tagInfoIndex] = tagInfo;
       victim.SetBodyMatColor(TagColor, TagDuration);
@@ -191,8 +222,8 @@ function Mutate(string MutateString, PlayerController Sender)
 
   if (MutateString == "info") // dump info for all mutators
   {
-    ShowInfo(sender);
     super.Mutate(MutateString, Sender);
+    ShowInfo(sender);
     return;
   }
 
@@ -210,14 +241,14 @@ function Mutate(string MutateString, PlayerController Sender)
     cmd = left(cmd, i);
   }
 
-  if (cmd == "info")
-  {
-    ShowInfo(Sender);
-    return;
-  }
   if (cmd == "help")
   {
     ShowHelp(Sender);
+    return;
+  }
+  if (cmd == "info")
+  {
+    ShowInfo(Sender);
     return;
   }
 
@@ -246,11 +277,11 @@ function Mutate(string MutateString, PlayerController Sender)
     DamagePlasma = 17;
     DamageRadius = 120;
     DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0;
+    DamageFactorSelf = 0.5;
     KnockbackPlasma = 20000;
     KnockbackBeam = 0;
     DamageBeam = 45;
-    DamageCombo = 3;
+    DamageCombo = 8;
     TagDuration = 2;
     LevitationSelf = 50;
     LevitationOthers = 100;
@@ -265,7 +296,7 @@ function Mutate(string MutateString, PlayerController Sender)
     DamageFactorSelf = 1.0;
     KnockbackPlasma = 20000;
     KnockbackBeam = 200;
-    DamageBeam = 35;
+    DamageBeam = 30;
     DamageCombo = 13;
     TagDuration = 1.5;
     LevitationSelf = 50;
@@ -299,11 +330,18 @@ function Mutate(string MutateString, PlayerController Sender)
     FireIntervalPlasma = float(arg);
   else if (cmd ~= "FireIntervalBeam")
     FireIntervalBeam = float(arg);
+  else if (cmd ~= "DrawDamageRadius")
+    DrawDamageRadius = bool(arg);
   else
   {
     sender.ClientMessage("SuperStingray: unknown command: " $ cmd @ arg);
     return;
   }
+
+  `log("SuperStingray mutated:" @ cmd @ arg);
+
+  if (sender == none)
+    return;
 
   // tell everyone that a setting was changed
   foreach WorldInfo.AllControllers(class'PlayerController', pc)
@@ -313,25 +351,26 @@ function Mutate(string MutateString, PlayerController Sender)
   }
 }
 
-function ShowHelp(PlayerController Sender)
-{
-  Sender.ClientMessage("mutate sr [setting] [value]: change [setting] to [value] (see 'mutate sr info')", 'Info');
-  Sender.ClientMessage("mutate sr info: show current Stingray settings", 'Info');
-  Sender.ClientMessage("mutate sr preset 2: plasma=17, bonus=13, beam=35 but faster", 'Info');
-  Sender.ClientMessage("mutate sr preset 1: plasma=17, bonus=3, beam=45", 'Info');
-  Sender.ClientMessage("mutate sr preset 0: TOXIKK defaults", 'Info');
-  Sender.ClientMessage("_____ SuperStingray help _____");
-}
-
-function ShowInfo(PlayerController Sender)
+function ShowHelp(PlayerController pc)
 {
   // reverse order for chat log
-  Sender.ClientMessage("LevitationOthers=" $ LevitationOthers $ ", LevitationSelf=" $ LevitationSelf, 'Info');
-  Sender.ClientMessage("DamageBeam=" $ DamageBeam $ ", FireIntervalBeam=" $ FireIntervalBeam $ ", KnockbackBeam=" $ KnockbackBeam, 'Info');
-  Sender.ClientMessage("DamageCombo=" $ DamageCombo $ ", TagDuration=" $ TagDuration, 'Info');
-  Sender.ClientMessage("DamageFactorSplash=" $ DamageFactorSplash $ ", DamageFactorSelf=" $ DamageFactorSelf $ ", KnockbackPlasma=" $ KnockbackPlasma, 'Info');
-  Sender.ClientMessage("DamagePlasma=" $ DamagePlasma $ ", FireIntervalPlasma=" $ FireIntervalPlasma $ ", DamageRadius=" $ DamageRadius, 'Info');
-  Sender.ClientMessage("_____ SuperStingray settings _____");
+  pc.ClientMessage("mutate sr [setting] [value]: change [setting] to [value] (see 'mutate sr info')", 'Info');
+  pc.ClientMessage("mutate sr info: show current Stingray settings", 'Info');
+  pc.ClientMessage("mutate sr preset 2: plasma=17, combo bonus=13, beam=30 with faster reload", 'Info');
+  pc.ClientMessage("mutate sr preset 1: plasma=17, combo bonus=8, beam=45", 'Info');
+  pc.ClientMessage("mutate sr preset 0: TOXIKK defaults", 'Info');
+  pc.ClientMessage("_____ SuperStingray help _____");
+}
+
+function ShowInfo(PlayerController pc)
+{
+  // reverse order for chat log
+  pc.ClientMessage("LevitationOthers=" $ LevitationOthers $ ", LevitationSelf=" $ LevitationSelf, 'Info');
+  pc.ClientMessage("DamageBeam=" $ DamageBeam $ ", FireIntervalBeam=" $ FireIntervalBeam $ ", KnockbackBeam=" $ KnockbackBeam, 'Info');
+  pc.ClientMessage("DamageCombo=" $ DamageCombo $ ", TagDuration=" $ TagDuration, 'Info');
+  pc.ClientMessage("DamageFactorSplash=" $ DamageFactorSplash $ ", DamageFactorSelf=" $ DamageFactorSelf $ ", KnockbackPlasma=" $ KnockbackPlasma, 'Info');
+  pc.ClientMessage("DamagePlasma=" $ DamagePlasma $ ", FireIntervalPlasma=" $ FireIntervalPlasma $ ", DamageRadius=" $ DamageRadius, 'Info');
+  pc.ClientMessage("_____ SuperStingray settings _____");
 }
 
 defaultproperties

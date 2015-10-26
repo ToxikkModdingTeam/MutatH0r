@@ -8,32 +8,44 @@ class CRZMutator_Roq3t extends UTMutator config (MutatH0r);
 
 var config float Knockback, KnockbackFactorHoriz, KnockbackFactorVertOthers, KnockbackFactorVertSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var config float DamageFactorSelf, DamageRadius;
+var bool DrawDamageRadius;
+var bool receivedWelcomeMessage;
 
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    Knockback, FireInterval, DamageFactorDirect, DamageRadius;
+    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius;
 }
 
-function NotifyLogin(Controller newPlayer)
-{
-  local PlayerController pc;
-  pc = PlayerController(newPlayer);
-  if (pc != none)
-  {
-    //ShowInfo(pc);
-    pc.ClientMessage("<font color='#880000'>Roq3t mutator</font>: Use console command <font color='#880000'>mutate ro help</font> to modify the Cerberus.");
-  }
-
-  super.NotifyLogin(newPlayer);
-}
-
-simulated function PostBeginPlay()
+simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
-
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
+
+  DrawDamageRadius = true;
+  Mutate("ro preset 1", none);
+
+  // in NM_Standalone, messages aren't printed at this time, so set a timer
+  if (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone) 
+    SetTimer(1.0, true, 'ShowWelcomeMessage');
+}
+
+simulated function ShowWelcomeMessage()
+{
+  local PlayerController pc;
+
+  if (receivedWelcomeMessage)
+    return;
+
+  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
+  {
+    pc.ClientMessage("Use console command <font color='#cc0000'>mutate ro help</font> to modify the <font color='#cc0000'>Cerberus</font>.");
+    receivedWelcomeMessage = true;
+  }
+
+  if (receivedWelcomeMessage)
+    ClearTimer('ShowWelcomeMessage');
 }
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
@@ -45,7 +57,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   if (string(DamageType) != "CRZDmgType_RocketLauncher")
     return;
 
-  Damage *= Damage >= 100 ? DamageFactorDirect : DamageFactorSplash;
+  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; // FIXME: doesn't work for MaxDamage powerup
   if (Injured == InstigatedBy.Pawn)
   {
     Damage *= DamageFactorSelf;
@@ -64,6 +76,7 @@ simulated event Tick(float DeltaTime)
   local UTPawn P;
   local PlayerController PC;
   local Projectile proj;
+  local vector v;
   
   Super.Tick(Deltatime);
 
@@ -89,6 +102,16 @@ simulated event Tick(float DeltaTime)
       proj.MomentumTransfer = Knockback;
     }
   }
+
+  // draw splash radius
+  if (DrawDamageRadius && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone))
+  {
+    foreach WorldInfo.DynamicActors(class'UTPawn', P)
+    {
+      v = P.CylinderComponent.GetPosition() + vect(0,0,-1) * P.CylinderComponent.CollisionHeight;
+      P.DrawDebugCylinder(v, v, P.CylinderComponent.CollisionRadius + DamageRadius, 16, 255, 0, 0, false);
+    }
+  }
 }
 
 function TweakCerberus(Pawn p)
@@ -111,8 +134,8 @@ function Mutate(string MutateString, PlayerController sender)
 
   if (MutateString == "info") // dump info for all mutators
   {
-    ShowInfo(sender);
     super.Mutate(MutateString, Sender);
+    ShowInfo(sender);
     return;
   }
 
@@ -130,14 +153,14 @@ function Mutate(string MutateString, PlayerController sender)
     cmd = left(cmd, i);
   }
 
-  if (cmd == "info")
-  {
-    ShowInfo(Sender);
-    return;
-  }
   if (cmd == "help")
   {
     ShowHelp(Sender);
+    return;
+  }
+  if (cmd == "info")
+  {
+    ShowInfo(Sender);
     return;
   }
 
@@ -161,20 +184,6 @@ function Mutate(string MutateString, PlayerController sender)
   }
   else if ((cmd $ arg) == "preset1")
   {
-    Knockback=80000;
-    KnockbackFactorHoriz = 1.0;
-    KnockbackFactorVertSelf = 1.25;
-    KnockbackFactorVertOthers = 0.75;
-    MinKnockbackVert = 0.0;
-    MaxKnockbackVert = 1000000.0;
-    FireInterval = 0.85;
-    DamageFactorDirect = 1.0;
-    DamageFactorSplash = 0.5;
-    DamageFactorSelf = 2.0; // combines with Splash factor to 1.0
-    DamageRadius = 220;
-  }
-  else if ((cmd $ arg) == "preset2")
-  {
     Knockback=80000 * 0.75;
     KnockbackFactorHoriz = 1.0;
     KnockbackFactorVertOthers = 1.0;
@@ -185,6 +194,34 @@ function Mutate(string MutateString, PlayerController sender)
     DamageFactorDirect = 1.0;
     DamageFactorSplash = 1.0;
     DamageFactorSelf = 1.0;
+    DamageRadius = 220;
+  }
+  else if ((cmd $ arg) == "preset2")
+  {
+    Knockback=80000;
+    KnockbackFactorHoriz = 1.0;
+    KnockbackFactorVertSelf = 1.25;
+    KnockbackFactorVertOthers = 0.75;
+    MinKnockbackVert = 0.0;
+    MaxKnockbackVert = 1000000.0;
+    FireInterval = 1.1;
+    DamageFactorDirect = 1.0;
+    DamageFactorSplash = 1.0;
+    DamageFactorSelf = 1.0;
+    DamageRadius = 160;
+  }
+  else if ((cmd $ arg) == "preset3")
+  {
+    Knockback=80000;
+    KnockbackFactorHoriz = 1.0;
+    KnockbackFactorVertSelf = 1.25;
+    KnockbackFactorVertOthers = 0.75;
+    MinKnockbackVert = 0.0;
+    MaxKnockbackVert = 1000000.0;
+    FireInterval = 0.85;
+    DamageFactorDirect = 1.0;
+    DamageFactorSplash = 0.5;
+    DamageFactorSelf = 2.0; // combines with Splash factor to 1.0
     DamageRadius = 220;
   }
   else if (cmd ~= "KnockbackFactorHoriz")
@@ -205,11 +242,18 @@ function Mutate(string MutateString, PlayerController sender)
     DamageFactorSplash = float(arg);
   else if (cmd ~= "DamageFactorSelf")
     DamageFactorSelf = float(arg);
+  else if (cmd ~= "DrawDamageRadius")
+    DrawDamageRadius = bool(arg);
   else
   {
     sender.ClientMessage("Roq3t: unknown command: " $ cmd @ arg);
     return;
   }
+
+  `log("Roq3t mutated:" @ cmd @ arg);
+
+  if (sender == none)
+    return;
 
   // tell everyone that a setting was changed
   foreach WorldInfo.AllControllers(class'PlayerController', pc)
@@ -219,23 +263,24 @@ function Mutate(string MutateString, PlayerController sender)
   }
 }
 
-function ShowHelp(PlayerController Sender)
+function ShowHelp(PlayerController pc)
 {
-  Sender.ClientMessage("mutate ro [setting] [value]: change [setting] to [value] (see 'mutate ro info')", 'Info');
-  Sender.ClientMessage("mutate ro info: show current Stingray settings", 'Info');
-  Sender.ClientMessage("mutate ro preset 2: reload=1.1, knockback=0.75, self-bounce=1.25", 'Info');
-  Sender.ClientMessage("mutate ro preset 1: reload=0.85, splash=0.5, self-bounce: 1.25, other-bounce=0.75", 'Info');
-  Sender.ClientMessage("mutate ro preset 0: TOXIKK defaults", 'Info');
-  Sender.ClientMessage("_____ Roq3t help _____");
+  pc.ClientMessage("mutate ro [setting] [value]: change [setting] to [value] (see 'mutate ro info')", 'Info');
+  pc.ClientMessage("mutate ro info: show current Stingray settings", 'Info');
+  pc.ClientMessage("mutate ro preset 3: reload=0.85, splash=0.5, self-bounce: 1.25, other-bounce=0.75", 'Info');
+  pc.ClientMessage("mutate ro preset 2: reload=1.1, smaller splash radius, self-bounce=1.25, other-bounce=0.75", 'Info');
+  pc.ClientMessage("mutate ro preset 1: reload=1.1, knockback=0.75, self-bounce=1.25", 'Info');
+  pc.ClientMessage("mutate ro preset 0: TOXIKK defaults", 'Info');
+  pc.ClientMessage("_____ Roq3t help _____");
 }
 
-function ShowInfo(PlayerController Sender)
+function ShowInfo(PlayerController pc)
 {
   // reverse order for chat log
-  Sender.ClientMessage("MinKnockbackVert=" $ MinKnockbackVert $ ", MaxKnockbackVert=" $ MaxKnockbackVert, 'Info');
-  Sender.ClientMessage("KnockbackFactorHoriz=" $ KnockbackFactorHoriz $ ", KnockbackFactorVertOthers=" $ KnockbackFactorVertOthers $ ", KnockbackFactorVertSelf=" $ KnockbackFactorVertOthers, 'Info');
-  Sender.ClientMessage("FireInterval=" $ FireInterval $ ", DamageFactorDirect=" $ DamageFactorDirect $ ", DamageFactorSplash=" $ DamageFactorSplash $ ", DamageRadius=" $ DamageRadius, 'Info');
-  Sender.ClientMessage("_____ Roq3t settings _____");
+  pc.ClientMessage("MinKnockbackVert=" $ MinKnockbackVert $ ", MaxKnockbackVert=" $ MaxKnockbackVert, 'Info');
+  pc.ClientMessage("KnockbackFactorHoriz=" $ KnockbackFactorHoriz $ ", KnockbackFactorVertOthers=" $ KnockbackFactorVertOthers $ ", KnockbackFactorVertSelf=" $ KnockbackFactorVertOthers, 'Info');
+  pc.ClientMessage("FireInterval=" $ FireInterval $ ", DamageFactorDirect=" $ DamageFactorDirect $ ", DamageFactorSplash=" $ DamageFactorSplash $ ", DamageRadius=" $ DamageRadius, 'Info');
+  pc.ClientMessage("_____ Roq3t settings _____");
 }
 
 
