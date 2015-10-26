@@ -300,10 +300,10 @@ function Mutate(string MutateString, PlayerController Sender)
   else if (cmd ~= "FireIntervalBeam")
     FireIntervalBeam = float(arg);
   else
-	{
+  {
     sender.ClientMessage("SuperStingray: unknown command: " $ cmd @ arg);
     return;
-	}
+  }
 
   // tell everyone that a setting was changed
   foreach WorldInfo.AllControllers(class'PlayerController', pc)

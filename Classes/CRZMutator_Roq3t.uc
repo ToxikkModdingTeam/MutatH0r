@@ -11,8 +11,8 @@ var config float DamageFactorSelf, DamageRadius;
 
 replication
 {
-	if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-		Knockback, FireInterval, DamageFactorDirect, DamageRadius;
+  if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
+    Knockback, FireInterval, DamageFactorDirect, DamageRadius;
 }
 
 function NotifyLogin(Controller newPlayer)
@@ -30,53 +30,53 @@ function NotifyLogin(Controller newPlayer)
 
 simulated function PostBeginPlay()
 {
-	super.PostBeginPlay();
+  super.PostBeginPlay();
 
-	SetTickGroup(ETickingGroup.TG_PreAsyncWork);
-	Enable('Tick');
+  SetTickGroup(ETickingGroup.TG_PreAsyncWork);
+  Enable('Tick');
 }
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
   local float knockbackFactorVert;
 
-	super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
+  super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
-	if (string(DamageType) != "CRZDmgType_RocketLauncher")
-		return;
+  if (string(DamageType) != "CRZDmgType_RocketLauncher")
+    return;
 
-	Damage *= Damage >= 100 ? DamageFactorDirect : DamageFactorSplash;
-	if (Injured == InstigatedBy.Pawn)
-	{
-		Damage *= DamageFactorSelf;
+  Damage *= Damage >= 100 ? DamageFactorDirect : DamageFactorSplash;
+  if (Injured == InstigatedBy.Pawn)
+  {
+    Damage *= DamageFactorSelf;
     knockbackFactorVert = KnockbackFactorVertSelf;
-	}
+  }
   else
     knockbackFactorVert = KnockbackFactorVertOthers;
   
-	Momentum.X = Momentum.X * KnockbackFactorHoriz;
-	Momentum.Y = Momentum.Y * KnockbackFactorHoriz;
-	Momentum.Z = FClamp(Momentum.Z * knockbackFactorVert, MinKnockbackVert, MaxKnockbackVert);	
+  Momentum.X = Momentum.X * KnockbackFactorHoriz;
+  Momentum.Y = Momentum.Y * KnockbackFactorHoriz;
+  Momentum.Z = FClamp(Momentum.Z * knockbackFactorVert, MinKnockbackVert, MaxKnockbackVert);	
 }
 
 simulated event Tick(float DeltaTime)
 {	
-	local UTPawn P;
-	local PlayerController PC;
+  local UTPawn P;
+  local PlayerController PC;
   local Projectile proj;
-	
-	Super.Tick(Deltatime);
+  
+  Super.Tick(Deltatime);
 
   // modify Cerberus
-	if (Role == ROLE_Authority)
-	{
-		foreach WorldInfo.AllPawns(class'UTPawn', P)
-			TweakCerberus(P);
-	}
+  if (Role == ROLE_Authority)
+  {
+    foreach WorldInfo.AllPawns(class'UTPawn', P)
+      TweakCerberus(P);
+  }
   else
   {
-	  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
-		  TweakCerberus(PC.Pawn);
+    foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
+      TweakCerberus(PC.Pawn);
   }
 
   // modify rocket projectiles
@@ -85,7 +85,7 @@ simulated event Tick(float DeltaTime)
     if (string(proj.Class) == "CRZProj_Rocket")
     {
       proj.Damage = 100 * DamageFactorDirect;
-	    proj.DamageRadius = DamageRadius;
+      proj.DamageRadius = DamageRadius;
       proj.MomentumTransfer = Knockback;
     }
   }
@@ -93,13 +93,13 @@ simulated event Tick(float DeltaTime)
 
 function TweakCerberus(Pawn p)
 {
-	local UTWeapon w;
+  local UTWeapon w;
 
-	if (p != none && p.Weapon != none && string(p.Weapon.Class) == "CRZWeap_RocketLauncher")
-	{
-		w = UTWeapon(p.Weapon);
-		w.FireInterval[0] = FireInterval;
-	}
+  if (p != none && p.Weapon != none && string(p.Weapon.Class) == "CRZWeap_RocketLauncher")
+  {
+    w = UTWeapon(p.Weapon);
+    w.FireInterval[0] = FireInterval;
+  }
 }
 
 function Mutate(string MutateString, PlayerController sender)
@@ -187,29 +187,29 @@ function Mutate(string MutateString, PlayerController sender)
     DamageFactorSelf = 1.0;
     DamageRadius = 220;
   }
-	else if (cmd ~= "KnockbackFactorHoriz")
-		KnockbackFactorHoriz = float(arg);
-	else if (cmd ~= "KnockbackFactorVertSelf")
-		KnockbackFactorVertSelf = float(arg);
-	else if (cmd ~= "KnockbackFactorVertOthers")
-		KnockbackFactorVertOthers = float(arg);
-	else if (cmd ~= "MinKnockbackVert")
-		MinKnockbackVert = float(arg);
-	else if (cmd ~= "MaxKnockbackVert")
-		MaxKnockbackVert = float(arg);
-	else if (cmd ~= "FireInterval")
-		FireInterval = float(arg);
-	else if (cmd ~= "DamageFactorDirect")
-		DamageFactorDirect = float(arg);
-	else if (cmd ~= "DamageFactorSplash")
-		DamageFactorSplash = float(arg);
-	else if (cmd ~= "DamageFactorSelf")
-		DamageFactorSelf = float(arg);
-	else
-	{
+  else if (cmd ~= "KnockbackFactorHoriz")
+    KnockbackFactorHoriz = float(arg);
+  else if (cmd ~= "KnockbackFactorVertSelf")
+    KnockbackFactorVertSelf = float(arg);
+  else if (cmd ~= "KnockbackFactorVertOthers")
+    KnockbackFactorVertOthers = float(arg);
+  else if (cmd ~= "MinKnockbackVert")
+    MinKnockbackVert = float(arg);
+  else if (cmd ~= "MaxKnockbackVert")
+    MaxKnockbackVert = float(arg);
+  else if (cmd ~= "FireInterval")
+    FireInterval = float(arg);
+  else if (cmd ~= "DamageFactorDirect")
+    DamageFactorDirect = float(arg);
+  else if (cmd ~= "DamageFactorSplash")
+    DamageFactorSplash = float(arg);
+  else if (cmd ~= "DamageFactorSelf")
+    DamageFactorSelf = float(arg);
+  else
+  {
     sender.ClientMessage("Roq3t: unknown command: " $ cmd @ arg);
     return;
-	}
+  }
 
   // tell everyone that a setting was changed
   foreach WorldInfo.AllControllers(class'PlayerController', pc)
@@ -241,6 +241,6 @@ function ShowInfo(PlayerController Sender)
 
 defaultproperties
 {
-	RemoteRole=ROLE_SimulatedProxy
-	bAlwaysRelevant=true
+  RemoteRole=ROLE_SimulatedProxy
+  bAlwaysRelevant=true
 }
