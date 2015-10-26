@@ -183,6 +183,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
       {
         `log("Added bonus damage: " $ tagInfo.ComboExtraDamage);
         Damage += tagInfo.ComboExtraDamage;
+        tagInfo.ComboExtraDamage = 0;
       }
  
       TaggedPawns[tagInfoIndex] = tagInfo;

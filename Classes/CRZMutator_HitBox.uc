@@ -8,7 +8,7 @@
 
 class CRZMutator_HitBox extends UTMutator config(MutatH0r);
 
-var bool DrawCylinder;
+var config bool DrawCylinder;
 var bool Crouch;
 var bool DetachBots;
 var bool receivedWelcomeMessage;
@@ -22,7 +22,6 @@ replication
 function InitMutator(string Options, out string ErrorMessage)
 {
   super.InitMutator(Options, ErrorMessage);
-  DrawCylinder = true;
 }
 
 simulated function PostBeginPlay()

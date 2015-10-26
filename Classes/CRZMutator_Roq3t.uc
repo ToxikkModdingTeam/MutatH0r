@@ -6,7 +6,7 @@
 
 class CRZMutator_Roq3t extends UTMutator config (MutatH0r);
 
-var config float Knockback, KnockbackFactorHoriz, KnockbackFactorVertOthers, KnockbackFactorVertSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
+var config float Knockback, KnockbackFactorOthers, KnockbackFactor, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var config float DamageFactorSelf, DamageRadius;
 var bool DrawDamageRadius;
 var bool receivedWelcomeMessage;
@@ -50,7 +50,7 @@ simulated function ShowWelcomeMessage()
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
-  local float knockbackFactorVert;
+  local float kbFactor;
 
   super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
@@ -61,14 +61,14 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   if (Injured == InstigatedBy.Pawn)
   {
     Damage *= DamageFactorSelf;
-    knockbackFactorVert = KnockbackFactorVertSelf;
+    kbFactor = KnockbackFactorSelf;
   }
   else
-    knockbackFactorVert = KnockbackFactorVertOthers;
+    kbFactor = KnockbackFactorOthers;
   
-  Momentum.X = Momentum.X * KnockbackFactorHoriz;
-  Momentum.Y = Momentum.Y * KnockbackFactorHoriz;
-  Momentum.Z = FClamp(Momentum.Z * knockbackFactorVert, MinKnockbackVert, MaxKnockbackVert);	
+  Momentum.X = Momentum.X * kbFactor;
+  Momentum.Y = Momentum.Y * kbFactor;
+  Momentum.Z = FClamp(Momentum.Z * kbFactor, MinKnockbackVert, MaxKnockbackVert);	
 }
 
 simulated event Tick(float DeltaTime)
@@ -171,9 +171,8 @@ function Mutate(string MutateString, PlayerController sender)
   if ((cmd $ arg) == "preset0")
   {
     Knockback=80000;
-    KnockbackFactorHoriz = 1.0;
-    KnockbackFactorVertSelf = 1.0;
-    KnockbackFactorVertOthers = 1.0;
+    KnockbackFactorOthers = 1.0;
+    KnockbackFactorSelf = 1.0;
     MinKnockbackVert = 0.0;
     MaxKnockbackVert = 1000000.0;
     FireInterval = 1.0;
@@ -185,23 +184,21 @@ function Mutate(string MutateString, PlayerController sender)
   else if ((cmd $ arg) == "preset1")
   {
     Knockback=80000 * 0.75;
-    KnockbackFactorHoriz = 1.0;
-    KnockbackFactorVertOthers = 1.0;
-    KnockbackFactorVertSelf = 1.25 / 0.75;
+    KnockbackFactorOthers = 1.0;
+    KnockbackFactorSelf = 1.0 / 0.75;
     MinKnockbackVert = 0.0;
     MaxKnockbackVert = 100000.0;
     FireInterval = 1.1;
     DamageFactorDirect = 1.0;
     DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0;
+    DamageFactorSelf = 1.0; // server-side self damage is twice the bootcamp dmg (66)
     DamageRadius = 220;
   }
   else if ((cmd $ arg) == "preset2")
   {
     Knockback=80000;
-    KnockbackFactorHoriz = 1.0;
-    KnockbackFactorVertSelf = 1.25;
-    KnockbackFactorVertOthers = 0.75;
+    KnockbackFactorOthers = 0.75;
+    KnockbackFactorSelf = 1.25;
     MinKnockbackVert = 0.0;
     MaxKnockbackVert = 1000000.0;
     FireInterval = 1.1;
@@ -213,9 +210,8 @@ function Mutate(string MutateString, PlayerController sender)
   else if ((cmd $ arg) == "preset3")
   {
     Knockback=80000;
-    KnockbackFactorHoriz = 1.0;
-    KnockbackFactorVertSelf = 1.25;
-    KnockbackFactorVertOthers = 0.75;
+    KnockbackFactorOthers = 0.75;
+    KnockbackFactorSelf = 1.25;
     MinKnockbackVert = 0.0;
     MaxKnockbackVert = 1000000.0;
     FireInterval = 0.85;
@@ -224,12 +220,10 @@ function Mutate(string MutateString, PlayerController sender)
     DamageFactorSelf = 2.0; // combines with Splash factor to 1.0
     DamageRadius = 220;
   }
-  else if (cmd ~= "KnockbackFactorHoriz")
-    KnockbackFactorHoriz = float(arg);
-  else if (cmd ~= "KnockbackFactorVertSelf")
-    KnockbackFactorVertSelf = float(arg);
-  else if (cmd ~= "KnockbackFactorVertOthers")
-    KnockbackFactorVertOthers = float(arg);
+  else if (cmd ~= "KnockbackFactorOthers")
+    KnockbackFactorOthers = float(arg);
+  else if (cmd ~= "KnockbackFactorSelf")
+    KnockbackFactorSelf = float(arg);
   else if (cmd ~= "MinKnockbackVert")
     MinKnockbackVert = float(arg);
   else if (cmd ~= "MaxKnockbackVert")
@@ -278,8 +272,9 @@ function ShowInfo(PlayerController pc)
 {
   // reverse order for chat log
   pc.ClientMessage("MinKnockbackVert=" $ MinKnockbackVert $ ", MaxKnockbackVert=" $ MaxKnockbackVert, 'Info');
-  pc.ClientMessage("KnockbackFactorHoriz=" $ KnockbackFactorHoriz $ ", KnockbackFactorVertOthers=" $ KnockbackFactorVertOthers $ ", KnockbackFactorVertSelf=" $ KnockbackFactorVertOthers, 'Info');
-  pc.ClientMessage("FireInterval=" $ FireInterval $ ", DamageFactorDirect=" $ DamageFactorDirect $ ", DamageFactorSplash=" $ DamageFactorSplash $ ", DamageRadius=" $ DamageRadius, 'Info');
+  pc.ClientMessage("Knockback=" $ Knockback $ ", KnockbackFactorOthers=" $ KnockbackFactorOthers $ ", KnockbackFactorSelf=" $ KnockbackFactorSelf, 'Info');
+  pc.ClientMessage("DamageFactorDirect=" $ DamageFactorDirect $ ", DamageFactorSplash=" $ DamageFactorSplash $ ", DamageFactorSelf=" $ DamageFactorSelf, 'Info');
+  pc.ClientMessage("FireInterval=" $ FireInterval $ ", DamageRadius=" $ DamageRadius, 'Info');
   pc.ClientMessage("_____ Roq3t settings _____");
 }
 
