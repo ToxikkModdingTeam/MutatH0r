@@ -40,9 +40,10 @@ function InitMutator(string options, out string error)
   if (idx >= 0)
   {
     mask = int(mid(options, idx + 14));
+    AllowWeaponPickups = (mask & 0x0800) != 0;
     InfiniteAmmo = (mask & 0x1000) != 0;
     RandomWeapon = (mask & 0x2000) != 0;
-    mask = mask & 0x0FFF;
+    mask = mask & 0x00FF;
   }
   else
   {
