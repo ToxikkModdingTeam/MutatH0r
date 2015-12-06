@@ -14,6 +14,10 @@ struct TaggedPawnInfo
   var float ComboExtraDamage;
 };
 
+const OPT_DrawDamageRadius = "?DrawDamageRadius=";
+const OPT_Preset = "?SuperRayPreset=";
+const OPT_Mutate = "?SuperRayMutate=";
+
 var config float DamagePlasma, DamageBeam, DamageCombo;
 var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var config float TagDuration;
@@ -22,6 +26,7 @@ var config float FireIntervalPlasma, FireIntervalBeam;
 var bool receivedWelcomeMessage;
 var LinearColor TagColor;
 var bool DrawDamageRadius;
+var bool AllowMutate;
 
 // server only
 var array<TaggedPawnInfo> TaggedPawns;
@@ -30,7 +35,7 @@ var array<TaggedPawnInfo> TaggedPawns;
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DrawDamageRadius;
+    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DrawDamageRadius, AllowMutate;
 }
 
 simulated event PostBeginPlay()
@@ -39,15 +44,36 @@ simulated event PostBeginPlay()
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
 
-  DrawDamageRadius=true;
-  Mutate("sr preset 1", none);
 
   // in NM_Standalone, messages aren't printed at this time, so set a timer
-  if (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone) 
+  if (AllowMutate && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone)) 
     SetTimer(1.0, true, 'ShowWelcomeMessage');
   
   if (Role == ROLE_Authority)
     SetTimer(1.0, true, 'CleanupTaggedPawns');
+}
+
+function InitMutator(string options, out string error)
+{
+  local int idx;
+  local string preset;
+
+  super.InitMutator(options, error);
+
+  idx = instr(caps(options), caps(OPT_Preset));
+  if (idx >= 0)
+  {
+    AllowMutate = true;
+    preset = mid(options, idx + len(OPT_Preset));
+    if (len(preset) > 0 && left(preset, 1) >= "0" && left(preset, 1) <= "9")
+      Mutate("sr preset " $ int(preset), none);
+  }
+
+  idx = instr(caps(options), caps(OPT_DrawDamageRadius));
+  DrawDamageRadius = idx >= 0 && int(mid(options, idx + len(OPT_DrawDamageRadius))) != 0;
+ 
+  idx = instr(caps(options), caps(OPT_Mutate));
+  AllowMutate = idx >= 0 && int(mid(options, idx + len(OPT_Mutate))) != 0;
 }
 
 simulated function ShowWelcomeMessage()
@@ -221,6 +247,12 @@ function Mutate(string MutateString, PlayerController Sender)
   local string arg;
   local int i;
 
+  if (!AllowMutate)
+  {
+    super.Mutate(MutateString, Sender);
+    return;
+  }
+
   if (MutateString == "info") // dump info for all mutators
   {
     super.Mutate(MutateString, Sender);
@@ -255,6 +287,12 @@ function Mutate(string MutateString, PlayerController Sender)
 
   if (arg == "")
     return;
+
+  if (!AllowMutate)
+  {
+    sender.ClientMessage("<font color='#00ffff'>sr:</font> modifications are disabled");
+    return;
+  }
 
   // modifications
   if ((cmd $ arg) == "preset0")

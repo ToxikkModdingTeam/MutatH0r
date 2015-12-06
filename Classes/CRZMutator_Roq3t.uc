@@ -6,15 +6,20 @@
 
 class CRZMutator_Roq3t extends UTMutator config (MutatH0r);
 
+const OPT_DrawDamageRadius = "?DrawDamageRadius=";
+const OPT_Preset = "?Roq3tPreset=";
+const OPT_Mutate = "?Roq3tMutate=";
+
 var config float Knockback, KnockbackFactorOthers, KnockbackFactor, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var config float DamageFactorSelf, DamageRadius;
 var bool DrawDamageRadius;
 var bool receivedWelcomeMessage;
+var bool AllowMutate;
 
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius;
+    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius, AllowMutate;
 }
 
 simulated event PostBeginPlay()
@@ -23,12 +28,32 @@ simulated event PostBeginPlay()
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
 
-  DrawDamageRadius = true;
-  Mutate("ro preset 1", none);
-
   // in NM_Standalone, messages aren't printed at this time, so set a timer
-  if (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone) 
+  if (AllowMutate && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone)) 
     SetTimer(1.0, true, 'ShowWelcomeMessage');
+}
+
+function InitMutator(string options, out string error)
+{
+  local int idx;
+  local string preset;
+
+  super.InitMutator(options, error);
+
+  idx = instr(caps(options), caps(OPT_Preset));
+  if (idx >= 0)
+  {
+    AllowMutate = true;
+    preset = mid(options, idx + len(OPT_Preset));
+    if (len(preset) > 0 && left(preset, 1) >= "0" && left(preset, 1) <= "9")
+      Mutate("ro preset " $ int(preset), none);
+  }
+
+  idx = instr(caps(options), caps(OPT_DrawDamageRadius));
+  DrawDamageRadius = idx >= 0 && int(mid(options, idx + len(OPT_DrawDamageRadius))) != 0;
+ 
+  idx = instr(caps(options), caps(OPT_Mutate));
+  AllowMutate = idx >= 0 && int(mid(options, idx + len(OPT_Mutate))) != 0;
 }
 
 simulated function ShowWelcomeMessage()
@@ -164,8 +189,14 @@ function Mutate(string MutateString, PlayerController sender)
     return;
   }
 
-  if (arg == "")
+  if (arg == "" )
     return;
+
+  if (!AllowMutate)
+  {
+    sender.ClientMessage("<font color='#00ffff'>ro:</font> modifications are disabled");
+    return;
+  }
 
   // modifications
   if ((cmd $ arg) == "preset0")

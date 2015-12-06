@@ -19,11 +19,6 @@ replication
     DrawCylinder;
 }
 
-function InitMutator(string Options, out string ErrorMessage)
-{
-  super.InitMutator(Options, ErrorMessage);
-}
-
 simulated function PostBeginPlay()
 {
   super.PostBeginPlay();

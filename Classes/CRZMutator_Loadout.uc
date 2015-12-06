@@ -1,5 +1,7 @@
 class CRZMutator_Loadout extends UTMutator config(MutatH0r);
 
+const OPT_LoadoutFlags = "?LoadoutFlags=";
+
 var config bool Ravager;
 var config bool Raven;
 var config bool Bullcraft;
@@ -13,33 +15,32 @@ var config bool InfiniteAmmo;
 var config bool RandomWeapon;
 var int mask;
 
-//replication
-//{
-//  if (Role == ROLE_Authority && (bNetInitial || bNetDirty))
-//    InfiniteAmmo;
-//}
+replication
+{
+  if (Role == ROLE_Authority && (bNetInitial || bNetDirty))
+    InfiniteAmmo;
+}
 
 function PostBeginPlay()
 {
 	Super.PostBeginPlay();
 
-  if (InfiniteAmmo)
-  {
-    // UTInvManager.bInfiniteAmmo only resets the ammo count back to MaxValue when it goes below 0, which prevents shots that need more than 1 ammo
-    // Without the SDKK and the ability to subclass the weapons, the only way to modify them on the client side is through Tick
-    SetTickGroup(ETickingGroup.TG_DuringAsyncWork);
-    Enable('Tick');
-  }
+  // UTInvManager.bInfiniteAmmo only resets the ammo count back to MaxValue when it goes below 0, which prevents shots that need more than 1 ammo
+  // Without the SDKK and the ability to subclass the weapons, the only way to modify them on the client side is through Tick
+  SetTickGroup(ETickingGroup.TG_DuringAsyncWork);
+  Enable('Tick');
 }
 
 function InitMutator(string options, out string error)
 {
   local int idx;
 
-  idx = instr(caps(options), "?LOADOUTFLAGS=");
+  super.InitMutator(options, error);
+
+  idx = instr(caps(options), caps(OPT_LoadoutFlags));
   if (idx >= 0)
   {
-    mask = int(mid(options, idx + 14));
+    mask = int(mid(options, idx + len(OPT_LoadoutFlags)));
     AllowWeaponPickups = (mask & 0x0800) != 0;
     InfiniteAmmo = (mask & 0x1000) != 0;
     RandomWeapon = (mask & 0x2000) != 0;
@@ -56,7 +57,6 @@ function InitMutator(string options, out string error)
     if (Dragoneer) mask = mask | 0x0040;
     if (Cerberus) mask = mask | 0x0080;
   }
-
   SetDefaultInventory(mask);
 }
 
