@@ -25,7 +25,7 @@ function InitMutator(string options, out string error)
 function SetServerName()
 {
   local int idx;
-  local string serverDescription, blob;
+  local string serverDescription;
   local OnlineGameInterface gameInterface;
   local OnlineGameSettings gameSettings;
 
@@ -49,8 +49,10 @@ function SetServerName()
   if (gameSettings == None)
     return;
   
-  // TODO: there might be some other special chars to handle. ":" breaks map travelling
-  serverDescription = repl(repl(serverDescription, "_", " "), ":", ";"); 
+  // Some special chars cannot be used in the description, because they break the URL parsing and map travelling
+  // There is nothing this mutator can do about it, because parsing already happenes before the mut is initialized
+  // Known to cause issues : / # &
+  serverDescription = repl(serverDescription, "_", " "); 
   gameSettings.SetStringProperty(PROPERTY_SERVERDESCRIPTION, serverDescription);
 }
 
