@@ -130,7 +130,7 @@ simulated function Tick(float DeltaTime)
   // tweak plasma balls
   foreach WorldInfo.DynamicActors(class'Projectile', proj)
   {
-    if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != DamagePlasma)
+    if (instr(string(proj.Class), "CRZProj_ScionRifle") == 0 && proj.Damage != DamagePlasma)
     {
       proj.Damage = DamagePlasma;
       proj.DamageRadius = DamageRadius;

@@ -132,7 +132,7 @@ simulated event Tick(float DeltaTime)
  
   foreach WorldInfo.DynamicActors(class'Projectile', proj)
   {
-    if (string(proj.Class) == "CRZProj_ScionRifle" && proj.Damage != BallDirectHitDamage)
+    if (instr(string(proj.Class), "CRZProj_Scion") == 0 && proj.Damage != BallDirectHitDamage)
     {
       proj.Damage = BallDirectHitDamage;
       proj.DamageRadius = 120;
