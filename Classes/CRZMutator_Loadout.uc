@@ -1,19 +1,11 @@
 class CRZMutator_Loadout extends UTMutator config(MutatH0r);
 
-const OPT_LoadoutFlags = "?LoadoutFlags=";
+const OPT_LoadoutPreset = "?LoadoutPreset=";
+const OPT_Loadout = "?Loadout=";
 
-var config bool Ravager;
-var config bool Raven;
-var config bool Bullcraft;
-var config bool Violator;
-var config bool Falcon;
-var config bool Stingray;
-var config bool Dragoneer;
-var config bool Cerberus;
-var config bool AllowWeaponPickups;
-var config bool InfiniteAmmo;
-var config bool RandomWeapon;
-var int mask;
+var CRZMUtator_LoadoutPreset preset;
+var array<class<Weapon> > weapons;
+var bool InfiniteAmmo;
 
 replication
 {
@@ -23,7 +15,7 @@ replication
 
 function PostBeginPlay()
 {
-	Super.PostBeginPlay();
+  Super.PostBeginPlay();
 
   // UTInvManager.bInfiniteAmmo only resets the ammo count back to MaxValue when it goes below 0, which prevents shots that need more than 1 ammo
   // Without the SDKK and the ability to subclass the weapons, the only way to modify them on the client side is through Tick
@@ -34,84 +26,128 @@ function PostBeginPlay()
 function InitMutator(string options, out string error)
 {
   local int idx;
-
+  local string s, presetId;
+  
   super.InitMutator(options, error);
 
-  idx = instr(caps(options), caps(OPT_LoadoutFlags));
+  // extract preset number from ?LoadoutPreset=... parameter
+  idx = instr(options, OPT_LoadoutPreset, false, true);
   if (idx >= 0)
   {
-    mask = int(mid(options, idx + len(OPT_LoadoutFlags)));
-    AllowWeaponPickups = (mask & 0x0800) != 0;
-    InfiniteAmmo = (mask & 0x1000) != 0;
-    RandomWeapon = (mask & 0x2000) != 0;
-    mask = mask & 0x00FF;
+    s = mid(options, idx + len(OPT_LoadoutPreset));
+    idx = instr(s, "?");
+    if (idx >= 0)
+      s = left(s, idx);
+    presetId = s;
   }
-  else
+  if (presetId == "")
+    presetId = "Preset1";
+
+  // load the preset and initialize internal variables
+  preset = new(none, presetId) class'CRZMutator_LoadoutPreset';
+  ApplyOptionOverrides(options);
+  InitWeapons();
+  if (weapons.Length == 0)
   {
-    if (Ravager) mask = mask | 0x0001;
-    if (Raven) mask = mask | 0x0002;
-    if (Bullcraft) mask = mask | 0x0004;
-    if (Violator) mask = mask | 0x0008;
-    if (Falcon) mask = mask | 0x0010;
-    if (Stingray) mask = mask | 0x0020;
-    if (Dragoneer) mask = mask | 0x0040;
-    if (Cerberus) mask = mask | 0x0080;
+    // failsafe for bad config or preset name
+    preset = new() class'CRZMutator_LoadoutPreset';
+    preset.Ravager = true;
+    preset.Raven = true;
+    preset.AllowWeaponPickups = true;
+    InitWeapons();
   }
-  SetDefaultInventory(mask);
+
+  InfiniteAmmo = preset.InfiniteAmmo;
+  if (!preset.RandomWeapon)
+    SetDefaultInventory();
 }
 
-function SetDefaultInventory(int m)
+function ApplyOptionOverrides(string options)
 {
-	local UTGame Game;
-	Game = UTGame(WorldInfo.Game);
-	if (Game != None)
-	{
-		Game.DefaultInventory.Length = 0;
-    if ((m & 0x0001) != 0)
-		  Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_Impactor", class'Class')));
-    if ((m & 0x0002) != 0)
-      Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_PistolAW29", class'Class')));
-    if ((m & 0x0004) != 0)
-      Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_ShotgunSG12", class'Class')));
-    if ((m & 0x0008) != 0)
-      Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_PulseRifle", class'Class')));
-    if ((m & 0x0010) != 0)
-      Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_SniperRifle", class'Class')));
-    if ((m & 0x0020) != 0)
-	    Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_ScionRifle", class'Class')));
-    if ((m & 0x0040) != 0)
-      Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_FlameThrower", class'Class')));
-    if ((m & 0x0080) != 0)
-		  Game.DefaultInventory.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_RocketLauncher", class'Class')));
-	}
+  local int idx;
+  local string s;
+  
+  // extract ?Loadout=... parameter
+  idx = instr(options, OPT_Loadout, false, true);
+  if (idx < 0) 
+    return;
+  
+  s = mid(options, idx + len(OPT_Loadout));
+  idx = instr(s, "?");
+  if (idx >= 0)
+    s = left(s, idx);
+  `log("Loadout=" $ s);
+  if (s == "")
+    return;
+
+  preset.Ravager = instr(s, "1") >= 0;
+  preset.Raven = instr(s, "2") >= 0;
+  preset.Bullcraft = instr(s, "3") >= 0;
+  preset.Violator = instr(s, "4") >= 0;
+  preset.Falcon = instr(s, "5") >= 0;
+  preset.Stingray = instr(s, "6") >= 0;
+  preset.Dragoneer = instr(s, "7") >= 0;
+  preset.Cerberus = instr(s, "8") >= 0;
+  preset.AllowWeaponPickups = instr(s, "P", false, true) >= 0;
+  preset.InfiniteAmmo = instr(s, "A", false, true) >= 0;
+  preset.RandomWeapon = instr(s, "R", false, true) >= 0;
+}
+
+function InitWeapons()
+{
+  if (preset.Ravager)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_Impactor", class'Class')));
+  if (preset.Raven)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_PistolAW29", class'Class')));
+  if (preset.Bullcraft)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_ShotgunSG12", class'Class')));
+  if (preset.Violator)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_PulseRifle", class'Class')));
+  if (preset.Falcon)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_SniperRifle", class'Class')));
+  if (preset.Stingray)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_ScionRifle", class'Class')));
+  if (preset.Dragoneer)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_FlameThrower", class'Class')));
+  if (preset.Cerberus)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_RocketLauncher", class'Class')));
+}
+
+function SetDefaultInventory()
+{
+  local UTGame Game;
+  local int i;
+
+  Game = UTGame(WorldInfo.Game);
+  if (Game == None) return;
+
+  Game.DefaultInventory.Length = 0;
+
+  if (preset.RandomWeapon)
+    Game.DefaultInventory.AddItem(weapons[rand(weapons.Length)]);
+  else
+  {
+    for (i=0; i<weapons.Length; i++)
+      Game.DefaultInventory.AddItem(weapons[i]);  
+  }
 }
 
 function bool CheckReplacement(Actor Other)
 {
   local UTPawn pawn;
-  local array<int> enabledLoadouts;
-  local int m;
 
   // toxikk doesn't derive from UTAmmoPickupFactory, so check for it the dirty way
   if (InfiniteAmmo && Other.IsA('UTItemPickupFactory') && instr(string(Other.class), "CRZAmmo_") == 0)
     return false;
 
-  if (!AllowWeaponPickups && (Other.IsA('UTWeaponPickupFactory') || Other.IsA('UTWeaponLocker')))
+  if (!preset.AllowWeaponPickups && (Other.IsA('UTWeaponPickupFactory') || Other.IsA('UTWeaponLocker')))
     return false;
 
-  if (RandomWeapon)
+  if (preset.RandomWeapon)
   {
     pawn = UTPawn(Other);
     if (pawn != None)
-    {
-      for (m = 0x0001; m < 0x0100; m = m << 1)
-      {
-        if ((mask & m) != 0)
-          enabledLoadouts.AddItem(m);
-      }
-      m = enabledLoadouts[rand(enabledLoadouts.Length)];
-      SetDefaultInventory(m);
-    }
+      SetDefaultInventory();
   }
 
   return super.CheckReplacement(Other);
@@ -135,6 +171,6 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
-	GroupNames[0]="WEAPONMOD"
-	GroupNames[1]="WEAPONRESPAWN"
+  GroupNames[0]="WEAPONMOD"
+  GroupNames[1]="WEAPONRESPAWN"
 }
