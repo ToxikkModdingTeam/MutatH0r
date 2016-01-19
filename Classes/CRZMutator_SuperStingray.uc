@@ -213,7 +213,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
       }
  
       TaggedPawns[tagInfoIndex] = tagInfo;
-      victim.SetBodyMatColor(TagColor, TagDuration);
+      //victim.SetBodyMatColor(TagColor, TagDuration);
     }
 
     // modify self damage (plasma splash)
@@ -428,4 +428,5 @@ defaultproperties
   //LevitationSelf=50
   //ExtraUpOthers=100
   //SelfDamageFactor=0
+  GroupNames[0]="STINGRAY"
 }

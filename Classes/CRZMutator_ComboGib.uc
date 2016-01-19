@@ -210,4 +210,6 @@ defaultproperties
   BeamFireRate=0.5
   BeamKnockbackVert=550
   ExtraUpSelf=50
+
+  GroupNames[0]="STINGRAY"
 }

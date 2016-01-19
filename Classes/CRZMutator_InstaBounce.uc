@@ -73,4 +73,5 @@ defaultproperties
   bAlwaysRelevant=true
 	GroupNames[0]="WEAPONMOD"
 	GroupNames[1]="WEAPONRESPAWN"
+  GroupNames[2]="STINGRAY"
 }

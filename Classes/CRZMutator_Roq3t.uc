@@ -315,4 +315,5 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
+  GroupNames[0]="CERBERUS"
 }
