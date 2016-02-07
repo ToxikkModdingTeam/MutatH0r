@@ -41,8 +41,8 @@ replication
 simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
-  SetTickGroup(ETickingGroup.TG_PreAsyncWork);
-  Enable('Tick');
+  //SetTickGroup(ETickingGroup.TG_PreAsyncWork);
+  //Enable('Tick');
 
 
   // in NM_Standalone, messages aren't printed at this time, so set a timer
@@ -108,61 +108,23 @@ function CleanupTaggedPawns()
   }
 }
 
-simulated function Tick(float DeltaTime)
+function bool CheckReplacement(Actor other)
 {
-  local PlayerController pc;
-  local UTPawn p;
-  local Projectile proj;
-  local Vector v;
-
-  // modify fire interval
-  if (Role == ROLE_Authority)
+  local UTWeapon w;
+  w = CRZWeap_ScionRifle(other);
+  if (w != none && H0Weap_ScionRifle(other) == none)
   {
-    foreach WorldInfo.AllPawns(class'UTPawn', p)
-      TweakStingray(p);
-  }
-  else
-  {
-    foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
-      TweakStingray(pc.Pawn);
+    ReplaceWith(other, "MutatH0r.H0Weap_ScionRifle");
+    //return false;
   }
 
-  // tweak plasma balls
-  foreach WorldInfo.DynamicActors(class'Projectile', proj)
+  if (CRZWeaponPickupFactory(other) != none && CRZWeaponPickupFactory(other).WeaponPickupClass == class'Cruzade.CRZWeap_ScionRifle')
   {
-    if (instr(string(proj.Class), "CRZProj_ScionRifle") == 0 && proj.Damage != DamagePlasma)
-    {
-      proj.Damage = DamagePlasma;
-      proj.DamageRadius = DamageRadius;
-      proj.MomentumTransfer = KnockbackPlasma;
-    }
+    CRZWeaponPickupFactory(other).WeaponPickupClass = class'MutatH0r.H0Weap_ScionRifle';
+    CRZWeaponPickupFactory(other).InventoryType = class'MutatH0r.H0Weap_ScionRifle';
   }
 
-  // draw splash radius
-  if (DrawDamageRadius && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone))
-  {
-    foreach WorldInfo.DynamicActors(class'UTPawn', P)
-    {
-      v = P.CylinderComponent.GetPosition() + vect(0,0,-1) * P.CylinderComponent.CollisionHeight;
-      P.DrawDebugCylinder(v, v, P.CylinderComponent.CollisionRadius + DamageRadius, 16, 0, 255, 255, false);
-    }
-  }
-}
-
-
-simulated function TweakStingray(Pawn P)
-{
-  local UTWeapon W;
- 
-  if (P == None)
-    return;
-  W = UTWeapon(P.Weapon);
-  if (W != none && string(W.Class) == "CRZWeap_ScionRifle")
-  {
-    W.InstantHitDamage[1] = DamageBeam;
-    W.FireInterval[0] = FireIntervalPlasma;
-    W.FireInterval[1] = FireIntervalBeam;
-  }               
+  return true;
 }
 
 
@@ -175,6 +137,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
   Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
+  return;
   if (instr(string(DamageType), "CRZDmgType_Scion") >=0)
   {
     victim = UTPawn(Injured);
