@@ -56,9 +56,6 @@ event PostRender(Canvas canvas)
   local PlumeSpriteInfo plume;
   local int alpha;
 
-  if (Owner.Plumes.Length == 0)
-    return;
-
   for (i=0; i<Owner.Plumes.Length; i++)
   {
     plume = Owner.Plumes[i];
@@ -76,16 +73,16 @@ event PostRender(Canvas canvas)
 
     alpha = int(255.0 * fclamp(1.0 - (plume.Age-0.5)/TimeToLive, 0, 1));
 
-    canvas.DrawColor = Black;
-    canvas.DrawColor.A = alpha / 4;
-    canvas.SetPos(pos.X - textSize.X/2 - 1, pos.Y - textSize.Y/2 - 1);
-    canvas.DrawText(string(plume.Value), false, Scale, Scale);
-    canvas.SetPos(pos.X - textSize.X/2 + 1, pos.Y - textSize.Y/2 - 1);
-    canvas.DrawText(string(plume.Value), false, Scale, Scale);
-    canvas.SetPos(pos.X - textSize.X/2 - 1, pos.Y - textSize.Y/2 + 1);
-    canvas.DrawText(string(plume.Value), false, Scale, Scale);
-    canvas.SetPos(pos.X - textSize.X/2 + 1, pos.Y - textSize.Y/2 + 1);
-    canvas.DrawText(string(plume.Value), false, Scale, Scale);
+    //canvas.DrawColor = Black;
+    //canvas.DrawColor.A = alpha / 4;
+    //canvas.SetPos(pos.X - textSize.X/2 - 1, pos.Y - textSize.Y/2 - 1);
+    //canvas.DrawText(string(plume.Value), false, Scale, Scale);
+    //canvas.SetPos(pos.X - textSize.X/2 + 1, pos.Y - textSize.Y/2 - 1);
+    //canvas.DrawText(string(plume.Value), false, Scale, Scale);
+    //canvas.SetPos(pos.X - textSize.X/2 - 1, pos.Y - textSize.Y/2 + 1);
+    //canvas.DrawText(string(plume.Value), false, Scale, Scale);
+    //canvas.SetPos(pos.X - textSize.X/2 + 1, pos.Y - textSize.Y/2 + 1);
+    //canvas.DrawText(string(plume.Value), false, Scale, Scale);
 
     canvas.DrawColor = GetColor(plume);
     canvas.DrawColor.A = alpha;
@@ -121,13 +118,13 @@ event NotifyGameSessionEnded()
 DefaultProperties
 {
   TimeToLive = 1.5;
-  Scale = 0.8;
-  TextFont=Font'crzgfx.Font_Jupiter_DF'
+  Scale = 0.66667;
+  TextFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
   Black = (R=0,G=0,B=0,A=255);
   DmgBelow20 = (R=255,G=255,B=255,A=255);
   DmgBelow50 = (R=255,G=255,B=64,A=255);
-  DmgBelow100 = (R=166,G=255,B=166,A=255);
-  Dmg100 = (R=255,G=128,B=128);
+  DmgBelow100 = (R=100,G=255,B=100,A=255);
+  Dmg100 = (R=255,G=40,B=40);
 
   GlowColor = (R=1,G=1,B=1,A=1.0);
   GlowOuterRadius = (X=1,Y=0.6);

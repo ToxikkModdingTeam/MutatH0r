@@ -16,7 +16,7 @@ simulated function PostBeginPlay()
 {
   super.PostBeginPlay();
 
-  if ( WorldInfo.NetMode != NM_DedicatedServer )
+  if ( WorldInfo.NetMode != NM_DedicatedServer)
   {
     AddToHUD();
     SetTickGroup(TG_PostAsyncWork);
@@ -45,8 +45,11 @@ simulated event Tick(float deltaTime)
 {
   local int i;
 
-  if (WorldInfo.NetMode == NM_DedicatedServer)
+  if (WorldInfo.NetMode == NM_DedicatedServer || Owner == None)
+  {
+    Disable('Tick');
     return;
+  }
 
   if (deltaTime < 0) // yep, quite often has -1
     return;
@@ -83,5 +86,9 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
 DefaultProperties
 {
   RemoteRole=ROLE_SimulatedProxy
-  bAlwaysRelevant = true;
+  bOnlyRelevantToOwner = true
+  bOnlyDirtyReplication = true
+  bReplicateMovement = false
+  bHidden = true
+  CollisionType = COLLIDE_CustomDefault
 }

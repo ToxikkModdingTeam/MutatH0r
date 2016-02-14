@@ -13,7 +13,7 @@ struct PlumeRepInfo
   var PlumeRepItem Plumes[16];
 };
 
-// server internal structures
+// server internal structures to aggregate damage within one tick for each client and victim
 
 struct PlumeVictimInfo
 {
@@ -32,7 +32,7 @@ struct PlumeReceiver
 var array<PlumeReceiver> PlumeReceivers;
 
 
-simulated function PostBeginPlay()
+function PostBeginPlay()
 {
   super.PostBeginPlay();
 
@@ -109,33 +109,21 @@ function Tick(float deltaTime)
 
 function NotifyLogout(Controller C)
 {
-  local PlayerController PC;
   local int i;
 
-  `Log("CRZMutator_DmgPlume::NotifyLogout " $ C.Owner);
-
-  return;
-
-  if (Role != ROLE_Authority)
-    return;
-
-  PC=PlayerController(C);
-  if (PC != None)
+  for (i=0; i<PlumeReceivers.Length; i++)
   {
-    for (i=0; i<PlumeReceivers.Length; i++)
+    if (PlumeReceivers[i].Controller == C)
     {
-      if (PlumeReceivers[i].Controller == C)
-      {
-        PlumeReceivers[i].Actor.Destroy();
-        PlumeReceivers.Remove(i, 1);
-        return;
-      }
+      PlumeReceivers[i].Actor.Destroy();
+      PlumeReceivers.Remove(i, 1);
+      break;
     }
   }
+
+  super.NotifyLogout(C);
 }
 
 DefaultProperties
 {
-  RemoteRole=ROLE_SimulatedProxy
-  bAlwaysRelevant = true;
 }

@@ -21,9 +21,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
 	Super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
-	Attacker = UTPawn(InstigatedBy.Pawn);
+	Attacker = InstigatedBy == None ? None : UTPawn(InstigatedBy.Pawn);
 	if (Attacker != None && Attacker.Health < Attacker.SuperHealthMax)
-	{
 		Attacker.Health = Min(Attacker.Health + Min(Injured.Health, int(DamageHealingFactor * Damage)), Attacker.SuperHealthMax);
-	}
 }
