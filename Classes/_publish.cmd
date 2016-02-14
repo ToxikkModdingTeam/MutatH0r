@@ -8,9 +8,9 @@ copy ..\..\..\..\UDKGame\Script\MutatH0r.u .
 if errorlevel 1 set error=1
 copy ..\..\..\..\UDKGame\Script\PredatH0r.u .
 if errorlevel 1 set error=1
-copy MutatH0r.u D:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Content
+copy MutatH0r.u D:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Script
 if errorlevel 1 set error=1
-copy PredatH0r.u D:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Content
+copy PredatH0r.u D:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Script
 if errorlevel 1 set error=1
 copy UDKMutatH0r.ini D:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Config
 if errorlevel 1 set error=1
