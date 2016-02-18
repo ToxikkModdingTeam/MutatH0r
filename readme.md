@@ -1,9 +1,8 @@
 TOXIKK Mutator Pack
 ===
 
-Installation through [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831):
-SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Script\\MutatH0r.u   
-SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Config\\UDKMutatH0r.ini
+Installation through [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831):   
+SteamApps\\workshop\\content\\324810\\603855831
 
 Manual installation (without Steam Workshop):   
 SteamApps\\common\\TOXIKK\\UDKGame\\Script\\[MutatH0r.u](http://toxikk.beham.biz/toxikkredirect2/MutatH0r.u)
@@ -29,7 +28,7 @@ The INI file settings are optimized for a server that runs a combination of Vamp
 <a name="DmgPlume"/>
 Damage Plumes
 ---
-Pops out a number over your target's head whenever you hit it: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)
+Pops out a number over your target's head whenever you hit it: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)   
 The plumes can be configured through UDKMutatH0r.ini, which can hold sections for multiple plume presets like
 \[Small DmgPlumeConfig\], ...   
 In your console you can select a preset with the command: plumes \<preset-name\>.   
