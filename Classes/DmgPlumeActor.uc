@@ -16,6 +16,9 @@ simulated function PostBeginPlay()
 {
   super.PostBeginPlay();
 
+  if (!class'CRZMutator_DmgPlume'.default.bEnablePlumes)
+    return;
+
   if ( WorldInfo.NetMode != NM_DedicatedServer)
   {
     AddToHUD();
@@ -56,7 +59,7 @@ simulated event Tick(float deltaTime)
   for (i=0; i<Plumes.Length; i++)
   {
     Plumes[i].Age += deltaTime;
-    if (Plumes[i].Age > class'DmgPlumeInteraction'.default.TimeToLive)
+    if (Plumes[i].Age > class'CRZMutator_DmgPlume'.default.TimeToLive)
     {
       Plumes.Remove(i, 1);
       --i;
@@ -76,8 +79,8 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
 
     plume.Location = repInfo.Plumes[i].Location;
     plume.Value = repInfo.Plumes[i].value;
-    plume.SpeedX = (frand() < 0.5 ? -1 : 1) * (frand() * 20 + 60);
-    plume.SpeedY = frand()*40+80;
+    plume.SpeedX = (frand() < 0.5 ? -1 : 1) * (frand() * class'CRZMutator_DmgPlume'.default.SpeedX.Random + class'CRZMutator_DmgPlume'.default.SpeedX.Fixed);
+    plume.SpeedY = frand()*class'CRZMutator_DmgPlume'.default.SpeedY.Random + class'CRZMutator_DmgPlume'.default.SpeedY.Fixed;
     Plumes.AddItem(plume);
   }
 }
