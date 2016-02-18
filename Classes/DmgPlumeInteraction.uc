@@ -9,24 +9,24 @@ var DmgPlumeActor Owner;
 var Font TextFont;
 
 
-static function DmgPlumeInteraction Create(DmgPlumeActor owner, PlayerController PC, optional bool bReturnExisting=true)
+static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerController controller, optional bool bReturnExisting=true)
 {
   local DmgPlumeInteraction newInt;
   local int i;
  
   if (bReturnExisting)
   {
-    for (i=0; i<PC.Interactions.length; i++)
+    for (i=0; i<controller.Interactions.length; i++)
     {
-      if (PC.Interactions[i].class == default.class)
-        return DmgPlumeInteraction(PC.Interactions[i]);
+      if (controller.Interactions[i].class == default.class)
+        return DmgPlumeInteraction(controller.Interactions[i]);
     }
   }
  
-  newInt = new(LocalPlayer(PC.Player).ViewportClient) default.class;
-  LocalPlayer(PC.Player).ViewportClient.InsertInteraction(newInt, 0);
-  PC.Interactions.InsertItem(0, newInt);
-  newInt.Owner = owner;
+  newInt = new(LocalPlayer(controller.Player).ViewportClient) default.class;
+  LocalPlayer(controller.Player).ViewportClient.InsertInteraction(newInt, 0);
+  controller.Interactions.InsertItem(0, newInt);
+  newInt.Owner = theOwner;
   return newInt;
 }
  
@@ -35,7 +35,12 @@ function Initialized()
   Viewport = GameViewportClient(Outer);
   PC = Viewport.GetPlayerOwner(0).Actor;
 }
-  
+ 
+exec function Plumes(string preset)
+{
+  Owner.LoadConfig(preset);
+}
+
 event PostRender(Canvas canvas)
 {
   local int i;
@@ -47,7 +52,7 @@ event PostRender(Canvas canvas)
   local float distance;
   local float gravity;
   
-  gravity = class'CRZMutator_DmgPlume'.default.SpeedY.Fixed + class'CRZMutator_DmgPlume'.default.SpeedY.Random / 2;
+  gravity = Owner.Settings.SpeedY.Fixed + Owner.Settings.SpeedY.Random / 2;
 
   for (i=0; i<Owner.Plumes.Length; i++)
   {
@@ -59,20 +64,20 @@ event PostRender(Canvas canvas)
     if (pos.X < 0 || pos.X >= canvas.ClipX || pos.Y < 0 || pos.Y >= canvas.ClipY)
       continue;
 
-    distance = VSize(Owner.GetALocalPlayerController().Pawn.Location - plume.Location);
+    distance = PC.Pawn == None ? 1000.0 : VSize(PC.Pawn.Location - plume.Location);
     if (distance < 0)
-      sizeScale = class'CRZMutator_DmgPlume'.default.ScaleLarge;
-    else if (distance > class'CRZMutator_DmgPlume'.default.ScaleDistance)
-      sizeScale = class'CRZMutator_DmgPlume'.default.ScaleSmall;
+      sizeScale = Owner.Settings.ScaleLarge;
+    else if (distance > Owner.Settings.ScaleDistance)
+      sizeScale = Owner.Settings.ScaleSmall;
     else
-      sizeScale = (1-(distance/class'CRZMutator_DmgPlume'.default.ScaleDistance)) * (class'CRZMutator_DmgPlume'.default.ScaleLarge - class'CRZMutator_DmgPlume'.default.ScaleSmall) + class'CRZMutator_DmgPlume'.default.ScaleSmall;
+      sizeScale = (1-(distance/Owner.Settings.ScaleDistance)) * (Owner.Settings.ScaleLarge - Owner.Settings.ScaleSmall) + Owner.Settings.ScaleSmall;
    
     canvas.Font = TextFont;
     canvas.TextSize(string(plume.Value), textSize.X, textSize.Y, sizeScale, sizeScale);
     if (pos.X + textSize.X / 2 + 1 >= canvas.ClipX)
       continue;
 
-    alpha = int(255.0 * fclamp(1.0 - (plume.Age-0.5)/class'CRZMutator_DmgPlume'.default.TimeToLive, 0, 1));
+    alpha = int(255.0 * fclamp(1.0 - (plume.Age-0.5)/Owner.Settings.TimeToLive, 0, 1));
 
     canvas.DrawColor = GetColor(plume);
     canvas.DrawColor.A = alpha;
@@ -86,11 +91,11 @@ simulated function Color GetColor(PlumeSpriteInfo plume)
   local PlumeColor prevCol, col;
   local int i,c;
 
-  c = class'CRZMutator_DmgPlume'.default.PlumeColors.Length;
-  prevCol = class'CRZMutator_DmgPlume'.default.PlumeColors[0];
+  c = Owner.Settings.PlumeColors.Length;
+  prevCol = Owner.Settings.PlumeColors[0];
   for (i=1; i<c; i++)
   {
-    col = class'CRZMutator_DmgPlume'.default.PlumeColors[i];
+    col = Owner.Settings.PlumeColors[i];
     if (plume.Value < col.Damage)
       return prevCol.Color;
     prevCol = col;

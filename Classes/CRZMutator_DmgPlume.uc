@@ -1,28 +1,5 @@
 class CRZMutator_DmgPlume extends Mutator config (MutatH0r);
 
-// client configuration
-
-struct PlumeColor
-{
-  var config int Damage;
-  var config Color Color;
-};
-
-struct PlumeSpeed
-{
-  var config int Fixed;
-  var config int Random;
-};
-
-var config bool bEnablePlumes;
-var config array<PlumeColor> PlumeColors;
-var config float ScaleSmall;
-var config float ScaleLarge;
-var config float ScaleDistance;
-var config float TimeToLive;
-var config PlumeSpeed SpeedX;
-var config PlumeSpeed SpeedY;
-
 // structures sent from server to clients
 
 struct PlumeRepItem

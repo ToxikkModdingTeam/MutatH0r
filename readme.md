@@ -1,17 +1,21 @@
 TOXIKK Mutator Pack
 ===
 
+Installation through [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831):
+SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Script\\MutatH0r.u   
+SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Config\\UDKMutatH0r.ini
 
-**Files needed to run the mutator (server or local game):**
-
-SteamApps\\common\\TOXIKK\\UDKGame\\CookedPC\\[MutatH0r.u](http://toxikk.beham.biz/toxikkredirect2/MutatH0r.u)
+Manual installation (without Steam Workshop):   
+SteamApps\\common\\TOXIKK\\UDKGame\\Script\\[MutatH0r.u](http://toxikk.beham.biz/toxikkredirect2/MutatH0r.u)
 SteamApps\\common\\TOXIKK\\UDKGame\\Config\\[UDKMutatH0r.ini](http://toxikk.beham.biz/toxikkredirect2/UDKMutatH0r.ini)
+
 
 The INI file settings are optimized for a server that runs a combination of Vampire + Regen/Decay + Stim Head.
 
 **Included Mutators:**
 
-<a href="#ComboGib">ComboGib</a>
+<a href="#DmgPlume">Damage Plumes</a>
+| <a href="#ComboGib">ComboGib</a>
 | <a href="#Roq3t">Roq3t</a>
 | <a href="#SuperStingray">SuperStingray</a>
 | <a href="#Vampire">Vampire</a>
@@ -21,6 +25,16 @@ The INI file settings are optimized for a server that runs a combination of Vamp
 | <a href="#Loadout">Loadout</a>
 <p>
 
+
+<a name="DmgPlume"/>
+Damage Plumes
+---
+Pops out a number over your target's head whenever you hit it: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)
+The plumes can be configured through UDKMutatH0r.ini, which can hold sections for multiple plume presets like
+\[Small DmgPlumeConfig\], ...   
+In your console you can select a preset with the command: plumes \<preset-name\>.   
+Default presets are: off, small, large.
+You can modify them or add new ones as you see fit.
 
 <a name="ComboGib"/>
 ComboGib
