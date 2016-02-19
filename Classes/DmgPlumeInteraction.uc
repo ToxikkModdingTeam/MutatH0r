@@ -52,6 +52,9 @@ event PostRender(Canvas canvas)
   local float distance;
   local float gravity;
   
+  if (Owner == None) // actor destroyed when match is over
+    return;
+
   gravity = Owner.Settings.SpeedY.Fixed + Owner.Settings.SpeedY.Random / 2;
 
   for (i=0; i<Owner.Plumes.Length; i++)
@@ -105,7 +108,6 @@ simulated function Color GetColor(PlumeSpriteInfo plume)
 
 event NotifyGameSessionEnded()
 {
-  Disable('Tick');
   Owner = None;
   PC = None;
   Viewport = None;
