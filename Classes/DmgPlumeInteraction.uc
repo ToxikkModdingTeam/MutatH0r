@@ -36,9 +36,33 @@ function Initialized()
   PC = Viewport.GetPlayerOwner(0).Actor;
 }
  
-exec function Plumes(string preset)
+exec function Plumes(optional string preset)
 {
-  Owner.LoadConfig(preset);
+  local array<string> names;
+  local string msg, iniPreset;
+  local int i;
+
+  preset = Locs(preset);
+  if (preset == "")
+  {
+    if (!GetPerObjectConfigSections(class'DmgPlumeConfig', names)) // names are returned in reverse order
+    {
+      names.AddItem("large");
+      names.AddItem("small");
+      names.AddItem("off");
+    }
+    for (i=names.Length-1; i>=0; i--)
+    {
+      if (msg != "") msg = msg $ ", ";
+      iniPreset = repl(locs(names[i]), " dmgplumeconfig", "");
+      msg = msg $ "<font color=\"" $ (iniPreset == Owner.DmgPlumeConfig ? "#ffff00" : "#00ffff") $ "\">" $ iniPreset $ "</font>";
+    }
+    PC.ClientMessage("Usage: <font color=\"#ffff00\">plumes </font>&lt;<font color=\"#00ffff\">preset</font>&gt; with one of these presets: " $ msg);
+  }
+  else if (!Owner.LoadPreset(preset))
+  {
+    PC.ClientMessage("Plumes: unknown preset: " $ preset);
+  }    
 }
 
 event PostRender(Canvas canvas)

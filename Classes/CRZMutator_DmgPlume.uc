@@ -54,19 +54,8 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   pc = PlayerController(InstigatedBy);
   if (pc == none)
     return;
-  
-  // find or create plume receiver
-  for (i=0; i<PlumeReceivers.Length; i++)
-  {
-    if (PlumeReceivers[i].Controller == InstigatedBy)
-      break;
-  }
-  if (i >= PlumeReceivers.Length)
-  {
-    PlumeReceivers.Add(1);
-    PlumeReceivers[i].Controller = InstigatedBy;
-    PlumeReceivers[i].Actor = Spawn(class'DmgPlumeActor', pc);
-  }
+
+  i = GetOrAddPlumeReceiver(InstigatedBy);
 
   // find or create plume for victim and aggregate damage
   for (j=0; j<PlumeReceivers[i].Victims.Length; j++)
@@ -105,6 +94,29 @@ function Tick(float deltaTime)
     rec.Actor.AddPlumes(repInfo);
     PlumeReceivers[i].Victims.Length = 0; // must use full path to set original struct member and not the local copy
   }
+}
+
+function int GetOrAddPlumeReceiver(Controller C)
+{
+  local int i;
+
+  // find or create plume receiver
+  for (i=0; i<PlumeReceivers.Length; i++)
+  {
+    if (PlumeReceivers[i].Controller == C)
+      return i;
+  }
+
+  PlumeReceivers.Add(1);
+  PlumeReceivers[i].Controller = C;
+  PlumeReceivers[i].Actor = Spawn(class'DmgPlumeActor', C);
+  return i;
+}
+
+function NotifyLogin(Controller C)
+{
+  super.NotifyLogin(C);
+  GetOrAddPlumeReceiver(C);
 }
 
 function NotifyLogout(Controller C)

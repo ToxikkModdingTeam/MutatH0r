@@ -205,7 +205,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
         if (Damage != DamagePlasma)
           Damage *= DamageFactorSplash;
       }
-      else if (string(DamageType) == "CRZDmgType_ScionRifle")
+      else if (string(DamageType) == "CRZDmgType_ScionRifle" || string(DamageType) == "CRZDmgType_ScionRifle_Headshot")
       {
         //`log("Added bonus damage: " $ tagInfo.ComboExtraDamage);
         Damage += tagInfo.ComboExtraDamage;

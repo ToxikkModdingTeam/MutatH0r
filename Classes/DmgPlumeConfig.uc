@@ -27,12 +27,12 @@ var config array<PlumeColor> PlumeColors;
 // Fallback to create presets when mutator was auto-downloaded from a server and there is no local .ini
 function SetDefaults(string preset)
 {
-  preset = caps(preset);
-  if (preset == "OFF")
+  preset = locs(preset);
+  if (preset == "off")
   {
     bEnablePlumes = false;
   }
-  else if (preset == "LARGE")
+  else if (preset == "large")
   {
     bEnablePlumes=true;
     ScaleSmall=0.5;

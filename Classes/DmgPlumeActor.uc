@@ -1,4 +1,4 @@
-class DmgPlumeActor extends Actor dependson(CRZMutator_DmgPlume);
+class DmgPlumeActor extends Actor dependson(CRZMutator_DmgPlume) config(MutatH0r);
 
 struct PlumeSpriteInfo
 {
@@ -9,6 +9,8 @@ struct PlumeSpriteInfo
   var float SpeedY;
 };
 
+var config string DmgPlumeConfig;
+
 var DmgPlumeConfig Settings;
 var DmgPlumeInteraction PlumeInteraction;
 var array<PlumeSpriteInfo> Plumes;
@@ -17,7 +19,14 @@ simulated function PostBeginPlay()
 {
   super.PostBeginPlay();
 
-  LoadConfig("small");
+  if (DmgPlumeConfig == "")
+    DmgPlumeConfig = "small";
+  if (!LoadPreset(DmgPlumeConfig))
+  {
+    // when the mutator was auto-downloaded from a server, then there is no local .ini to initialize the settings, so we set up some defaults
+    Settings = new class'DmgPlumeConfig';
+    Settings.SetDefaults(DmgPlumeConfig);   
+  }
   if (!Settings.bEnablePlumes)
     return;
 
@@ -31,17 +40,19 @@ simulated function PostBeginPlay()
     Disable('Tick');
 }
 
-simulated function LoadConfig(string preset)
+simulated function bool LoadPreset(string preset)
 {
-  Settings = new(none, preset) class'DmgPlumeConfig';
-  if (Settings == None)
-  {
-    `Log("Plume config not found: " $ preset);
-     Settings = new class'DmgPlumeConfig';
-  }
-  // when the mutator was auto-downloaded from a server, then there is no local .ini to initialize the settings, so we set up some defaults
-  if (Settings.PlumeColors.Length == 0)
-    Settings.SetDefaults(preset);
+  local DmgPlumeConfig cfg;
+
+  preset = Locs(preset);
+  cfg = new(none, preset) class'DmgPlumeConfig';
+  if (cfg == None || cfg.PlumeColors.Length == 0)
+    return false;
+
+  Settings = cfg;
+  DmgPlumeConfig = preset;
+  self.SaveConfig();
+  return true;
 }
 
 simulated function AddToHUD()
