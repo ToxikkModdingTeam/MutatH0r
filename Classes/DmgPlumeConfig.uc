@@ -24,6 +24,8 @@ var config PlumeSpeed SpeedY;
 var config float TimeToLive;
 var config array<PlumeColor> PlumeColors;
 
+var config bool bEnableCrosshairNames;
+
 // Fallback to create presets when mutator was auto-downloaded from a server and there is no local .ini
 function SetDefaults(string preset)
 {
@@ -31,10 +33,12 @@ function SetDefaults(string preset)
   if (preset == "off")
   {
     bEnablePlumes = false;
+    bEnableCrosshairNames = false;
   }
   else if (preset == "large")
   {
     bEnablePlumes=true;
+    bEnableCrosshairNames = true;
     ScaleSmall=0.5;
     ScaleLarge=2.0;
     ScaleDistance=500;
@@ -47,6 +51,7 @@ function SetDefaults(string preset)
   else
   {
     bEnablePlumes=true;
+    bEnableCrosshairNames = true;
     ScaleSmall=0.4;
     ScaleLarge=1.0;
     ScaleDistance=300;

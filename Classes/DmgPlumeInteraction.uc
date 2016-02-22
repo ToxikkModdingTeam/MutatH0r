@@ -6,7 +6,9 @@ var PlayerController PC;
 var DmgPlumeActor Owner;
 
 // static
-var Font TextFont;
+var Font PlumeFont;
+var Font CrosshairNameFont;
+var Color CrosshairNameColor;
 
 
 static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerController controller, optional bool bReturnExisting=true)
@@ -65,7 +67,24 @@ exec function Plumes(optional string preset)
   }    
 }
 
+exec function CrosshairNames(bool show)
+{
+  if (Owner != None)
+    Owner.Settings.bEnableCrosshairNames = show;
+}
+
 event PostRender(Canvas canvas)
+{
+  if (Owner == None) // actor destroyed when match is over
+    return;
+
+  if (Owner.Settings.bEnablePlumes)
+    RenderDamagePlumes(canvas);
+  if (Owner.Settings.bEnableCrosshairNames)
+    RenderCrosshairName(canvas);
+}
+
+function RenderDamagePlumes(Canvas canvas)
 {
   local int i;
   local vector pos;
@@ -75,9 +94,6 @@ event PostRender(Canvas canvas)
   local float sizeScale;
   local float distance;
   local float gravity;
-  
-  if (Owner == None) // actor destroyed when match is over
-    return;
 
   gravity = Owner.Settings.SpeedY.Fixed + Owner.Settings.SpeedY.Random / 2;
 
@@ -99,7 +115,7 @@ event PostRender(Canvas canvas)
     else
       sizeScale = (1-(distance/Owner.Settings.ScaleDistance)) * (Owner.Settings.ScaleLarge - Owner.Settings.ScaleSmall) + Owner.Settings.ScaleSmall;
    
-    canvas.Font = TextFont;
+    canvas.Font = PlumeFont;
     canvas.TextSize(string(plume.Value), textSize.X, textSize.Y, sizeScale, sizeScale);
     if (pos.X + textSize.X / 2 + 1 >= canvas.ClipX)
       continue;
@@ -110,6 +126,29 @@ event PostRender(Canvas canvas)
     canvas.DrawColor.A = alpha;
     canvas.SetPos(pos.X - textSize.X/2, pos.Y - textSize.Y/2);
     canvas.DrawText(string(plume.Value), false, sizeScale, sizeScale);
+  }
+}
+
+function RenderCrosshairName(Canvas canvas)
+{
+  local CRZPawn target;
+  local Vector start, end, hitLocation, hitNormal;
+  local Rotator rot;
+  local float width, height;
+
+  if (PC.Pawn == None)
+    return;
+  
+  PC.GetPlayerViewPoint(start, rot);
+  end = start + vector(rot) * 10000;
+  target = CRZPawn(PC.Pawn.Trace(hitLocation, hitNormal, end, start));
+  if (target != None && target.PlayerReplicationInfo != None && target.CurrentStealthFactor <= 0.5)
+  {
+    canvas.Font = CrosshairNameFont;
+    canvas.TextSize(target.PlayerReplicationInfo.PlayerName, width, height, 1.0, 1.0);
+    canvas.SetPos(canvas.ClipX / 2 - width / 2, canvas.ClipY * 4 / 10 - height / 2);
+    canvas.DrawColor = CrosshairNameColor;
+    canvas.DrawText(target.PlayerReplicationInfo.PlayerName, false, 1.0, 1.0);
   }
 }
 
@@ -141,5 +180,7 @@ event NotifyGameSessionEnded()
 
 DefaultProperties
 {
-  TextFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
+  PlumeFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
+  CrosshairNameFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
+  CrosshairNameColor=(R=255,G=255,B=255,A=255)
 }
