@@ -108,27 +108,6 @@ simulated event Tick(float deltaTime)
   }
 }
 
-simulated function UpdateTypingStatus()
-{
-  local LocalPlayer lp;
-  local bool typing;
-  local name stateName;
-
-  if (PlumeInteraction == None)
-    return;
-  lp = LocalPlayer(PlumeInteraction.PC.Player);
-  if (lp != None && lp.ViewportClient != none && lp.ViewportClient.ViewportConsole != none)
-  {
-    stateName = lp.ViewportClient.ViewportConsole.GetStateName();
-    typing = stateName == 'Open' || stateName == 'Typing';
-    if (typing != self.isTyping)
-    {
-      self.isTyping = typing;
-      SetTyping(PlumeInteraction.PC.PlayerReplicationInfo.PlayerID, typing);
-    }
-  }
-}
-
 unreliable client function AddPlumes(PlumeRepInfo repInfo)
 {
   local int i;
@@ -147,6 +126,28 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
     plume.SpeedX = (frand() < 0.5 ? -1 : 1) * (frand() * Settings.SpeedX.Random + Settings.SpeedX.Fixed);
     plume.SpeedY = frand()*Settings.SpeedY.Random + Settings.SpeedY.Fixed;
     Plumes.AddItem(plume);
+  }
+}
+
+
+simulated function UpdateTypingStatus()
+{
+  local LocalPlayer lp;
+  local bool typing;
+  local name stateName;
+
+  if (PlumeInteraction == None)
+    return;
+  lp = LocalPlayer(PlumeInteraction.PC.Player);
+  if (lp != None && lp.ViewportClient != none && lp.ViewportClient.ViewportConsole != none)
+  {
+    stateName = lp.ViewportClient.ViewportConsole.GetStateName();
+    typing = stateName == 'Open' || stateName == 'Typing';
+    if (typing != self.isTyping)
+    {
+      self.isTyping = typing;
+      SetTyping(PlumeInteraction.PC.PlayerReplicationInfo.PlayerID, typing);
+    }
   }
 }
 
