@@ -9,6 +9,8 @@ var DmgPlumeActor Owner;
 var Font PlumeFont;
 var Font CrosshairNameFont;
 var Color CrosshairNameColor;
+var Color TypingIconColor;
+var Color TypingIconBackColor;
 
 
 static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerController controller, optional bool bReturnExisting=true)
@@ -82,6 +84,7 @@ event PostRender(Canvas canvas)
     RenderDamagePlumes(canvas);
   if (Owner.Settings.bEnableCrosshairNames)
     RenderCrosshairName(canvas);
+  RenderTypingIcon(canvas);
 }
 
 function RenderDamagePlumes(Canvas canvas)
@@ -152,6 +155,68 @@ function RenderCrosshairName(Canvas canvas)
   }
 }
 
+function RenderTypingIcon(Canvas canvas)
+{
+  local int i, playerId;
+  local CRZPawn pawn;
+  local vector v;
+  local vector start, end;
+  local float dist, scale;
+  local Rotator rot;
+
+  canvas.Font = CrosshairNameFont;
+  canvas.DrawColor = TypingIconColor;
+  PC.GetPlayerViewPoint(start, rot);
+  //start = PC.Pawn != None ? PC.Pawn.Location + vect(0,0,1)*PC.Pawn.EyeHeight : PC.Location;
+
+  foreach PC.WorldInfo.AllPawns(class'CRZPawn', pawn)
+  {
+    if (pawn.CurrentStealthFactor >= 0.5)
+      continue;
+    if (pawn.PlayerReplicationInfo == None)
+      continue;
+    playerId = pawn.PlayerReplicationInfo.PlayerID;
+    if (playerId == PC.PlayerReplicationInfo.PlayerID)
+      continue;
+
+    for (i=0; i<Owner.areTyping.Length; i++)
+    {
+      if (owner.areTyping[i].PlayerId == playerId)
+      {
+        end = pawn.Location + vect(0,0,1)*pawn.EyeHeight;
+        dist = VSize(end-start);
+        //if (!pawn.PlayerCanSeeMe(true))
+        //  continue;
+        //if (((end - start) dot vector(rot)) < 0) // behind me
+        //  continue;
+        //if (!PC.FastTrace(end, start)) // eye-to-eye line of sight
+        //  continue;
+        if (!PC.CanSee(pawn))
+          continue;
+
+        scale = FMax((1200-dist)/600, 0.5);
+
+        if (true || owner.areTyping[i].bTyping)
+        {
+          v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);
+          //if (v.X + 30*scale < 0 || v.X - 30*scale > canvas.ClipX || v.Y - 5*scale < 0 || v.Y -35*scale > canvas.ClipY)
+          //  continue;
+          canvas.SetPos(v.X - 30 * scale, v.Y - 35*scale);
+          canvas.DrawColor = TypingIconBackColor;
+          canvas.DrawRect(60*scale, 30*scale);
+          canvas.DrawColor = TypingIconColor;
+          canvas.SetPos(v.X - 30*scale, v.Y - 35*scale);
+          canvas.DrawBox(60*scale, 30*scale);
+          canvas.SetPos(v.X - 25*scale, v.Y - 33*scale);
+          canvas.SetPos(v.X - 25*scale, v.Y - 33*scale);
+          canvas.DrawText("#$?!", false, scale, scale);
+        }
+        break;
+      }
+    }
+  }
+}
+
 simulated function Color GetColor(PlumeSpriteInfo plume)
 {
   local PlumeColor prevCol, col;
@@ -183,4 +248,6 @@ DefaultProperties
   PlumeFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
   CrosshairNameFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
   CrosshairNameColor=(R=255,G=255,B=255,A=255)
+  TypingIconBackColor=(R=0,G=0,B=255,A=128)
+  TypingIconColor=(R=255,G=255,B=255,A=255)
 }

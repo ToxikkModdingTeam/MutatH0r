@@ -9,11 +9,21 @@ struct PlumeSpriteInfo
   var float SpeedY;
 };
 
+struct TypingInfo
+{
+  var int PlayerId;
+  var bool bTyping;
+};
+
 var config string DmgPlumeConfig;
 
+var CRZMutator_DmgPlume Mut;
 var DmgPlumeConfig Settings;
 var DmgPlumeInteraction PlumeInteraction;
 var array<PlumeSpriteInfo> Plumes;
+
+var bool isTyping;
+var array<TypingInfo> areTyping;
 
 simulated function PostBeginPlay()
 {
@@ -80,6 +90,8 @@ simulated event Tick(float deltaTime)
     return;
   }
 
+  UpdateTypingStatus();
+
   if (!Settings.bEnablePlumes)
     return;
 
@@ -92,6 +104,27 @@ simulated event Tick(float deltaTime)
     {
       Plumes.Remove(i, 1);
       --i;
+    }
+  }
+}
+
+simulated function UpdateTypingStatus()
+{
+  local LocalPlayer lp;
+  local bool typing;
+  local name stateName;
+
+  if (PlumeInteraction == None)
+    return;
+  lp = LocalPlayer(PlumeInteraction.PC.Player);
+  if (lp != None && lp.ViewportClient != none && lp.ViewportClient.ViewportConsole != none)
+  {
+    stateName = lp.ViewportClient.ViewportConsole.GetStateName();
+    typing = stateName == 'Open' || stateName == 'Typing';
+    if (typing != self.isTyping)
+    {
+      self.isTyping = typing;
+      SetTyping(PlumeInteraction.PC.PlayerReplicationInfo.PlayerID, typing);
     }
   }
 }
@@ -117,6 +150,36 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
   }
 }
 
+reliable server function SetTyping(int playerId, bool typing)
+{
+  local int i;
+  `Log("SetTyping (" $ playerId $ "," $ typing $ ")");
+  for (i=0; i<Mut.PlumeReceivers.Length; i++)
+  {
+    if (Mut.PlumeReceivers[i].Controller != self.Owner)
+    {
+      Mut.PlumeReceivers[i].Actor.NotifyIsTyping(playerId, typing);
+    }
+  }
+}
+
+
+reliable client function NotifyIsTyping(int playerId, bool typing)
+{
+  local int i;
+  `Log("NotifyTyping (" $ playerId $ "," $ typing $ ")");
+  for (i=0; i<areTyping.Length; i++)
+  {
+    if (areTyping[i].PlayerId == playerId)
+      break;
+  }
+  if (i == areTyping.Length)
+  {
+    areTyping.Add(1);
+    areTyping[i].PlayerId = playerId;
+  }
+  areTyping[i].bTyping = typing;
+}
 
 DefaultProperties
 {

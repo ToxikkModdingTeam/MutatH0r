@@ -110,26 +110,32 @@ function int GetOrAddPlumeReceiver(Controller C)
   PlumeReceivers.Add(1);
   PlumeReceivers[i].Controller = C;
   PlumeReceivers[i].Actor = Spawn(class'DmgPlumeActor', C);
+  PlumeReceivers[i].Actor.Mut = self;
   return i;
 }
 
 function NotifyLogin(Controller C)
 {
   super.NotifyLogin(C);
-  GetOrAddPlumeReceiver(C);
+
+  if (PlayerController(C) != None)
+    GetOrAddPlumeReceiver(C);
 }
 
 function NotifyLogout(Controller C)
 {
   local int i;
 
-  for (i=0; i<PlumeReceivers.Length; i++)
+  if (PlayerController(C) != None)
   {
-    if (PlumeReceivers[i].Controller == C)
+    for (i=0; i<PlumeReceivers.Length; i++)
     {
-      PlumeReceivers[i].Actor.Destroy();
-      PlumeReceivers.Remove(i, 1);
-      break;
+      if (PlumeReceivers[i].Controller == C)
+      {
+        PlumeReceivers[i].Actor.Destroy();
+        PlumeReceivers.Remove(i, 1);
+        break;
+      }
     }
   }
 
