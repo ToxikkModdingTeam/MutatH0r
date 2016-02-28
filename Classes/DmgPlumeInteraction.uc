@@ -54,28 +54,55 @@ exec function Plumes(optional string preset)
   {
     if (!GetPerObjectConfigSections(class'DmgPlumeConfig', names)) // names are returned in reverse order
     {
+      // if player has no local .ini file, add hardcoded default presets
+      names.AddItem("huge");
       names.AddItem("large");
       names.AddItem("small");
-      names.AddItem("off");
     }
+    names.AddItem("off");
+
     for (i=names.Length-1; i>=0; i--)
     {
       if (msg != "") msg = msg $ ", ";
       iniPreset = repl(locs(names[i]), " dmgplumeconfig", "");
-      msg = msg $ "<font color=\"" $ (iniPreset == Owner.DmgPlumeConfig ? "#ffff00" : "#00ffff") $ "\">" $ iniPreset $ "</font>";
+      msg = msg $ "<font color=\"" $ (((Owner.bDisablePlumes && iniPreset == "off") || (iniPreset == Owner.DmgPlumeConfig)) ? "#ffff00" : "#00ffff") $ "\">" $ iniPreset $ "</font>";
     }
+
     PC.ClientMessage("Usage: <font color=\"#ffff00\">plumes </font>&lt;<font color=\"#00ffff\">preset</font>&gt; with one of these presets: " $ msg);
   }
-  else if (!Owner.LoadPreset(preset))
+  else
   {
-    PC.ClientMessage("Plumes: unknown preset: " $ preset);
+    if (preset == "off")
+    {
+      Owner.bDisablePlumes = true;
+      Owner.SaveConfig();
+    }
+    else if (Owner.LoadPreset(preset))
+    {
+      Owner.bDisablePlumes = false;
+      Owner.SaveConfig();
+    }
+    else
+      PC.ClientMessage("Plumes: unknown preset: " $ preset);
   }    
 }
 
 exec function CrosshairNames(bool show)
 {
   if (Owner != None)
-    Owner.Settings.bEnableCrosshairNames = show;
+  {
+    Owner.bDisableCrosshairNames = !show;
+    Owner.SaveConfig();
+  }
+}
+
+exec function ChatIcon(bool show)
+{
+  if (Owner != None)
+  {
+    Owner.bDisableChatIcon = !show;
+    Owner.SaveConfig();
+  }
 }
 
 event PostRender(Canvas canvas)
@@ -83,11 +110,12 @@ event PostRender(Canvas canvas)
   if (Owner == None) // actor destroyed when match is over
     return;
 
-  if (Owner.Settings.bEnablePlumes)
+  if (!Owner.bDisablePlumes)
     RenderDamagePlumes(canvas);
-  if (Owner.Settings.bEnableCrosshairNames)
+  if (!Owner.bDisableCrosshairNames)
     RenderCrosshairName(canvas);
-  RenderTypingIcon(canvas);
+  if (!Owner.bDisableChatIcon)
+    RenderTypingIcon(canvas);
 }
 
 function RenderDamagePlumes(Canvas canvas)

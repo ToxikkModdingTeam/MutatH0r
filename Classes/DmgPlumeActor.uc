@@ -16,6 +16,9 @@ struct TypingInfo
 };
 
 var config string DmgPlumeConfig;
+var config bool bDisablePlumes;
+var config bool bDisableCrosshairNames;
+var config bool bDisableChatIcon;
 
 var CRZMutator_DmgPlume Mut;
 var DmgPlumeConfig Settings;
@@ -32,13 +35,7 @@ simulated function PostBeginPlay()
   if (DmgPlumeConfig == "")
     DmgPlumeConfig = "small";
   if (!LoadPreset(DmgPlumeConfig))
-  {
-    // when the mutator was auto-downloaded from a server, then there is no local .ini to initialize the settings, so we set up some defaults
-    Settings = new class'DmgPlumeConfig';
-    Settings.SetDefaults(DmgPlumeConfig);   
-  }
-  if (!Settings.bEnablePlumes)
-    return;
+    LoadPreset("small");
 
   if (WorldInfo.NetMode != NM_DedicatedServer)
   {
@@ -57,11 +54,15 @@ simulated function bool LoadPreset(string preset)
   preset = Locs(preset);
   cfg = new(none, preset) class'DmgPlumeConfig';
   if (cfg == None || cfg.PlumeColors.Length == 0)
-    return false;
+  {
+    // when the mutator was auto-downloaded from a server, then there is no local .ini to initialize the settings, so we set up some defaults
+    cfg = new class'DmgPlumeConfig';
+    if (!cfg.SetDefaults(preset))
+      return false;
+  }
 
   Settings = cfg;
   DmgPlumeConfig = preset;
-  self.SaveConfig();
   return true;
 }
 
@@ -92,7 +93,7 @@ simulated event Tick(float deltaTime)
 
   UpdateTypingStatus();
 
-  if (!Settings.bEnablePlumes)
+  if (bDisablePlumes)
     return;
 
   if (deltaTime < 0) // yep, quite often has -1
@@ -113,7 +114,7 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
   local int i;
   local PlumeSpriteInfo plume;
 
-  if (!Settings.bEnablePlumes)
+  if (bDisablePlumes)
     return;
 
   for (i=0; i<ArrayCount(repInfo.Plumes); i++)

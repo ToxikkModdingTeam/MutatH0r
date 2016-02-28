@@ -14,8 +14,6 @@ struct PlumeSpeed
   var config int Random;
 };
 
-var config bool bValidConfig;
-var config bool bEnablePlumes;
 var config float ScaleSmall;
 var config float ScaleLarge;
 var config float ScaleDistance;
@@ -24,34 +22,12 @@ var config PlumeSpeed SpeedY;
 var config float TimeToLive;
 var config array<PlumeColor> PlumeColors;
 
-var config bool bEnableCrosshairNames;
-
 // Fallback to create presets when mutator was auto-downloaded from a server and there is no local .ini
-function SetDefaults(string preset)
+function bool SetDefaults(string preset)
 {
   preset = locs(preset);
-  if (preset == "off")
+  if (preset == "small")
   {
-    bEnablePlumes = false;
-    bEnableCrosshairNames = false;
-  }
-  else if (preset == "large")
-  {
-    bEnablePlumes=true;
-    bEnableCrosshairNames = true;
-    ScaleSmall=0.5;
-    ScaleLarge=2.0;
-    ScaleDistance=500;
-    SpeedX.Fixed = 200;
-    SpeedX.Random = 100;
-    SpeedY.Fixed = 300;
-    SpeedY.Random = 100;
-    TimeToLive=1.25;
-  }
-  else
-  {
-    bEnablePlumes=true;
-    bEnableCrosshairNames = true;
     ScaleSmall=0.4;
     ScaleLarge=1.0;
     ScaleDistance=300;
@@ -61,6 +37,30 @@ function SetDefaults(string preset)
     SpeedY.Random = 40;
     TimeToLive=1.25;
   }
+  else if (preset == "large")
+  {
+    ScaleSmall=0.5;
+    ScaleLarge=2.0;
+    ScaleDistance=500;
+    SpeedX.Fixed = 200;
+    SpeedX.Random = 100;
+    SpeedY.Fixed = 300;
+    SpeedY.Random = 100;
+    TimeToLive=1.25;
+  }
+  else if (preset == "huge")
+  {
+    ScaleSmall=1.0;
+    ScaleLarge=3.0;
+    ScaleDistance=750;
+    SpeedX.Fixed = 200;
+    SpeedX.Random = 200;
+    SpeedY.Fixed = 400;
+    SpeedY.Random = 200;
+    TimeToLive=1.25;
+  }
+  else
+    return false;
 
   PlumeColors.AddItem(CreatePlumeColor(0,  255, 255, 255));
   PlumeColors.AddItem(CreatePlumeColor(20, 255, 255, 160));
@@ -68,6 +68,7 @@ function SetDefaults(string preset)
   PlumeColors.AddItem(CreatePlumeColor(45, 100, 255, 100));
   PlumeColors.AddItem(CreatePlumeColor(70, 255,  65, 255));
   PlumeColors.AddItem(CreatePlumeColor(100,255,  48,  48));
+  return true;
 }
 
 function PlumeColor CreatePlumeColor(int damage, int r, int g, int b)
