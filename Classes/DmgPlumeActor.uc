@@ -155,7 +155,6 @@ simulated function UpdateTypingStatus()
 reliable server function SetTyping(int playerId, bool typing)
 {
   local int i;
-  `Log("SetTyping (" $ playerId $ "," $ typing $ ")");
   for (i=0; i<Mut.PlumeReceivers.Length; i++)
   {
     if (Mut.PlumeReceivers[i].Controller != self.Owner)
@@ -169,7 +168,6 @@ reliable server function SetTyping(int playerId, bool typing)
 reliable client function NotifyIsTyping(int playerId, bool typing)
 {
   local int i;
-  `Log("NotifyTyping (" $ playerId $ "," $ typing $ ")");
   for (i=0; i<areTyping.Length; i++)
   {
     if (areTyping[i].PlayerId == playerId)

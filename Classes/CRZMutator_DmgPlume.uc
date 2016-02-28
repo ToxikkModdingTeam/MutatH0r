@@ -31,7 +31,6 @@ struct PlumeReceiver
 // server
 var array<PlumeReceiver> PlumeReceivers;
 
-
 function PostBeginPlay()
 {
   super.PostBeginPlay();
@@ -43,6 +42,31 @@ function PostBeginPlay()
   }
 }
 
+function InitMutator(string options, out string errorMsg)
+{
+  super.InitMutator(options, errorMsg);
+  MoveMyselfToHeadOfMutatorList();
+}
+
+function MoveMyselfToHeadOfMutatorList()
+{
+  // move this mutator to the start of the mutator list so we don't miss any NetDamage() modifications
+
+  local Mutator mut;
+ 
+  if (WorldInfo.Game.BaseMutator == self)
+    return;
+  for (mut = WorldInfo.Game.BaseMutator; mut != None; mut=mut.NextMutator)
+  {
+    if (mut.NextMutator == self)
+    {
+      mut.NextMutator = self.NextMutator;
+      self.NextMutator = WorldInfo.Game.BaseMutator;
+      WorldInfo.Game.BaseMutator = self;
+      return;
+    }
+  }
+}
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, Vector HitLocation, out Vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
