@@ -26,7 +26,6 @@ function NotifyLogin(Controller c)
 
   super.NotifyLogin(c);
 
-  `Log("NotifyLogin " $ c $ ", isLocalPlayerController=" $ c.IsLocalController());
   if (!c.IsLocalController())
   {
     ca.c = c;

@@ -30,7 +30,6 @@ static function MotdInteraction Create(CRZMutator_Motd theOwner, PlayerControlle
  
   newInt = new(LocalPlayer(controller.Player).ViewportClient) default.class;
   LocalPlayer(controller.Player).ViewportClient.InsertInteraction(newInt, 0);
-  //controller.Interactions.InsertItem(0, newInt);
   controller.Interactions.AddItem(newInt);
   newInt.Owner = theOwner;
   return newInt;
