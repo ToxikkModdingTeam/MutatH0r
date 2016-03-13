@@ -1,7 +1,6 @@
 class MotdInteraction extends Interaction;
 
 // defined at initialization
-var GameViewportClient Viewport;
 var PlayerController PC;
 var CRZMutator_Motd Owner;
 
@@ -37,8 +36,7 @@ static function MotdInteraction Create(CRZMutator_Motd theOwner, PlayerControlle
  
 function Initialized()
 {
-  Viewport = GameViewportClient(Outer);
-  PC = Viewport.GetPlayerOwner(0).Actor;
+  PC = GameViewportClient(Outer).GetPlayerOwner(0).Actor;
 }
 
 exec function Motd()
@@ -86,21 +84,17 @@ function RenderMotd(Canvas canvas)
 {
   local float x,y,w,h,width, height, messageY;
   local int i;
-  local float padding;
+  local int padding;
   local string line;
 
-  padding = 8;
+  padding = 10;
 
+  // calc header height / width
   canvas.Font = HeaderFont;
-  for (i=0; i<owner.WelcomeHeader.Length; i++)
-  {
-    line = owner.WelcomeHeader[i];
-    if (line == "") line = "Äj";
-    canvas.TextSize(line, w, h, 1.0, 1.0);
-    width = FMax(width, w);
-    height += h;
-  }
+  canvas.TextSize(owner.WelcomeHeader, width, height, 1.0, 1.0); 
   messageY = height;
+
+  // calc message height / width
   canvas.Font = MessageFont;
   for (i=0; i<owner.WelcomeMessage.Length; i++)
   {
@@ -111,16 +105,18 @@ function RenderMotd(Canvas canvas)
     height += h;
   }
 
+  // draw box
   x = (canvas.ClipX - width) / 2;
   y = 150;
   canvas.DrawColor = BackgroundColor;
   canvas.SetPos(x - padding, y - padding);
   canvas.DrawRect(width + 2*padding, height + 2*padding);
   
+  // draw header + message
   canvas.DrawColor = TextColor; 
   canvas.Font = HeaderFont;
   canvas.SetPos(x, y);
-  canvas.DrawText(owner.WelcomeHeaderString, false, 1.0, 1.0);
+  canvas.DrawText(owner.WelcomeHeader, false, 1.0, 1.0);
   canvas.Font = MessageFont;
   canvas.SetPos(x, y + messageY);
   canvas.DrawText(owner.WelcomeMessageString, false, 1.0, 1.0);
@@ -130,8 +126,6 @@ event NotifyGameSessionEnded()
 {
   Owner = None;
   PC = None;
-  Viewport = None;
-
   super.NotifyGameSessionEnded();
 }
 
