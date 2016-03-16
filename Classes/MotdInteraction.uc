@@ -44,16 +44,6 @@ exec function Motd()
   Visible = !Visible;
 }
 
-function bool OnReceivedNativeInputKey(int controllerId, name key, EInputEvent eventType, optional float amountDepressed, optional bool bGamepad)
-{
-  if (Key == 'SpaceBar' && Visible)
-  {
-    Visible = false;
-    return true;
-  }
-  return super.OnReceivedNativeInputKey(controllerId, key, eventType, amountDepressed, bGamepad);
-}
-
 event PostRender(Canvas canvas)
 {
   local CRZHudWrapper wrapper;
@@ -83,7 +73,7 @@ event PostRender(Canvas canvas)
 function RenderMotd(Canvas canvas)
 {
   local float x,y,w,h,width, height, messageY;
-  local int i;
+  local int i, c;
   local int padding;
   local string line;
 
@@ -91,14 +81,17 @@ function RenderMotd(Canvas canvas)
 
   // calc header height / width
   canvas.Font = HeaderFont;
-  canvas.TextSize(owner.WelcomeHeader, width, height, 1.0, 1.0); 
+  canvas.TextSize(owner.ServerWelcomeHeader, width, height, 1.0, 1.0); 
   messageY = height;
 
   // calc message height / width
+  c = ArrayCount(owner.ServerWelcomeMessageLines);
   canvas.Font = MessageFont;
-  for (i=0; i<owner.WelcomeMessage.Length; i++)
+  for (i=0; i<c; i++)
   {
-    line = owner.WelcomeMessage[i];
+    line = owner.ServerWelcomeMessageLines[i];
+    if (line == class'CRZMutator_Motd'.const.EndMarker)
+      break;
     if (line == "") line = "Äj";
     canvas.TextSize(line, w, h, 1.0, 1.0);
     width = FMax(width, w);
@@ -116,10 +109,10 @@ function RenderMotd(Canvas canvas)
   canvas.DrawColor = TextColor; 
   canvas.Font = HeaderFont;
   canvas.SetPos(x, y);
-  canvas.DrawText(owner.WelcomeHeader, false, 1.0, 1.0);
+  canvas.DrawText(owner.ServerWelcomeHeader, false, 1.0, 1.0);
   canvas.Font = MessageFont;
   canvas.SetPos(x, y + messageY);
-  canvas.DrawText(owner.WelcomeMessageString, false, 1.0, 1.0);
+  canvas.DrawText(owner.ServerWelcomeMessageString, false, 1.0, 1.0);
 }
 
 event NotifyGameSessionEnded()
