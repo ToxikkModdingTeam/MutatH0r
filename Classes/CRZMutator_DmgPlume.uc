@@ -148,20 +148,29 @@ function NotifyLogin(Controller C)
 
 function NotifyLogout(Controller C)
 {
-  local int i;
+  local int i, j, playerId;
 
   if (PlayerController(C) != None)
   {
     for (i=0; i<PlumeReceivers.Length; i++)
     {
       if (PlumeReceivers[i].Controller == C)
-      {       
+      { 
+        // tell all clients that the player isn't typing anymore (he may reconnect later, and should not have a chat bubble)
+        if (PlumeReceivers[i].Actor.isTyping)
+        {
+          playerId = C.PlayerReplicationInfo.PlayerID;
+          for (j=0; j<PlumeReceivers.Length; j++)
+          {
+            if (PlumeReceivers[j].Controller != C)
+              PlumeReceivers[j].Actor.NotifyIsTyping(playerId, false);
+          }
+        }
+
         PlumeReceivers[i].Actor.Destroy();
         PlumeReceivers.Remove(i, 1);
         break;
       }
-      else if (PlumeReceivers[i].Actor.isTyping) // tell all clients that the player isn't typing anymore (he may reconnect later, so this is important)
-        PlumeReceivers[i].Actor.SetTyping(C.PlayerReplicationInfo.PlayerID, false);
     }
   }
 
