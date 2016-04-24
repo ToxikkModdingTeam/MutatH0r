@@ -36,6 +36,7 @@ static function MotdInteraction Create(CRZMutator_Motd theOwner, PlayerControlle
  
 function Initialized()
 {
+  super.Initialized();
   PC = GameViewportClient(Outer).GetPlayerOwner(0).Actor;
 }
 
@@ -48,23 +49,24 @@ event PostRender(Canvas canvas)
 {
   local CRZHudWrapper wrapper;
 
+  super.PostRender(canvas);
+
   if (Owner == None) // actor destroyed when match is over
     return;
 
-  // show MOTD during PreMatchLobby (after intro, before game)
   wrapper = CRZHudWrapper(PC.myHUD);
-  if (wrapper != None)
+  if (wrapper == None)
+    return;
+  
+  // show MOTD during PreMatchLobby (after intro, before game)
+  if (wrapper.CurrentHudMode != PrevHudMode)
   {
-    if (wrapper.CurrentHudMode != PrevHudMode)
-    {
-      if (wrapper.CurrentHudMode == HM_PreMatchLobby)
-        Visible = true;
-      else if (PrevHudMode == HM_PreMatchLobby)
-        Visible = false;
-      PrevHudMode = wrapper.CurrentHudMode;
-    }
+    if (wrapper.CurrentHudMode == HM_PreMatchLobby && PrevHudMode == HM_Intro)
+      Visible = true;
+    else if (PrevHudMode == HM_PreMatchLobby)
+      Visible = false;
+    PrevHudMode = wrapper.CurrentHudMode;
   }
-
 
   if (Visible)
     RenderMotd(canvas);
@@ -117,9 +119,9 @@ function RenderMotd(Canvas canvas)
 
 event NotifyGameSessionEnded()
 {
+  super.NotifyGameSessionEnded();
   Owner = None;
   PC = None;
-  super.NotifyGameSessionEnded();
 }
 
 DefaultProperties

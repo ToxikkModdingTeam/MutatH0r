@@ -81,7 +81,3 @@ function PlumeColor CreatePlumeColor(int damage, int r, int g, int b)
   pc.Color.A = 255;
   return pc;
 }
-
-defaultproperties
-{
-}
