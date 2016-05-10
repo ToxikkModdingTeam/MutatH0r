@@ -18,11 +18,11 @@ const OPT_DrawDamageRadius = "?DrawDamageRadius=";
 const OPT_Preset = "?SuperRayPreset=";
 const OPT_Mutate = "?SuperRayMutate=";
 
-var config float DamagePlasma, DamageBeam, DamageCombo;
-var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
-var config float TagDuration;
-var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
-var config float FireIntervalPlasma, FireIntervalBeam;
+var float DamagePlasma, DamageBeam, DamageCombo;
+var float KnockbackPlasma, KnockbackBeam, DamageRadius;
+var float TagDuration;
+var float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
+var float FireIntervalPlasma, FireIntervalBeam;
 var bool receivedWelcomeMessage;
 var LinearColor TagColor;
 var bool DrawDamageRadius;
@@ -44,53 +44,46 @@ simulated event PostBeginPlay()
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
 
-
-  // in NM_Standalone, messages aren't printed at this time, so set a timer
-  if (AllowMutate && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone)) 
-    SetTimer(1.0, true, 'ShowWelcomeMessage');
-  
   if (Role == ROLE_Authority)
     SetTimer(1.0, true, 'CleanupTaggedPawns');
 }
 
 function InitMutator(string options, out string error)
 {
-  local int idx;
-  local string preset;
+  local string val;
 
   super.InitMutator(options, error);
 
-  idx = instr(caps(options), caps(OPT_Preset));
-  if (idx >= 0)
-  {
-    AllowMutate = true;
-    preset = mid(options, idx + len(OPT_Preset));
-    if (len(preset) > 0 && left(preset, 1) >= "0" && left(preset, 1) <= "9")
-      Mutate("sr preset " $ int(preset), none);
-  }
-
-  idx = instr(caps(options), caps(OPT_DrawDamageRadius));
-  DrawDamageRadius = idx >= 0 && int(mid(options, idx + len(OPT_DrawDamageRadius))) != 0;
- 
-  idx = instr(caps(options), caps(OPT_Mutate));
-  AllowMutate = idx >= 0 && int(mid(options, idx + len(OPT_Mutate))) != 0;
+  ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
+  DrawDamageRadius = bool(class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius));
+  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+  AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
 }
 
-simulated function ShowWelcomeMessage()
+function ApplyPreset(string presetName)
 {
-  local PlayerController pc;
+  local SuperStingrayConfig preset;
 
-  if (receivedWelcomeMessage)
-    return;
+  if (presetName == "")
+    presetName = "Preset1";
+  preset = new(none, presetName) class'SuperStingrayConfig';
+  preset.SetDefaults();
 
-  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
-  {
-    pc.ClientMessage("Use console command <font color='#00ffff'>mutate sr help</font> to modify the <font color='#00ffff'>Stingray</font>.");
-    receivedWelcomeMessage = true;
-  }
-
-  if (receivedWelcomeMessage)
-    ClearTimer('ShowWelcomeMessage');
+  DamagePlasma = preset.DamagePlasma;
+  DamageBeam = preset.DamageBeam;
+  DamageCombo = preset.DamageCombo;
+  DamageRadius = preset.DamageRadius;
+  DrawDamageRadius = preset.DrawDamageRadius;
+  DamageFactorSelf = preset.DamageFactorSelf;
+  DamageFactorSplash = preset.DamageFactorSplash;
+  KnockbackPlasma = preset.KnockbackPlasma;
+  KnockbackBeam = preset.KnockbackBeam;
+  LevitationSelf = preset.LevitationSelf;
+  LevitationOthers = preset.LevitationOthers;
+  FireIntervalPlasma = preset.FireIntervalPlasma;
+  FireIntervalBeam = preset.FireIntervalBeam;
+  TagColor = preset.TagColor;
+  TagDuration = preset.TagDuration;
 }
 
 function CleanupTaggedPawns()
@@ -294,55 +287,8 @@ function Mutate(string MutateString, PlayerController Sender)
     return;
   }
 
-  // modifications
-  if ((cmd $ arg) == "preset0")
-  {
-    DamagePlasma = 35;
-    DamageRadius = 0;
-    DamageFactorSplash = 0;
-    DamageFactorSelf = 0;
-    KnockbackPlasma = 0;
-    KnockbackBeam = 0;
-    DamageBeam = 45;
-    DamageCombo = 0;
-    TagDuration = 0;
-    LevitationSelf = 0;
-    LevitationOthers = 0;
-    FireIntervalPlasma = 0.1667;
-    FireIntervalBeam = 0.85;
-  }
-  else if ((cmd $ arg) == "preset1")
-  {
-    DamagePlasma = 17;
-    DamageRadius = 120;
-    DamageFactorSplash = 1.0;
-    DamageFactorSelf = 0.5;
-    KnockbackPlasma = 20000;
-    KnockbackBeam = 0;
-    DamageBeam = 45;
-    DamageCombo = 8;
-    TagDuration = 2;
-    LevitationSelf = 50;
-    LevitationOthers = 100;
-    FireIntervalPlasma = 0.1667;
-    FireIntervalBeam = 0.85;
-  }
-  else if ((cmd $ arg) == "preset2")
-  {
-    DamagePlasma = 17;
-    DamageRadius = 120;
-    DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0;
-    KnockbackPlasma = 20000;
-    KnockbackBeam = 200;
-    DamageBeam = 30;
-    DamageCombo = 13;
-    TagDuration = 1.5;
-    LevitationSelf = 50;
-    LevitationOthers = 100;
-    FireIntervalPlasma = 0.1667;
-    FireIntervalBeam = 0.6667;
-  }
+  if (cmd == "preset")
+    ApplyPreset("preset" $ arg);
   else if (cmd ~= "DamagePlasma")
     DamagePlasma = float(arg);
   else if (cmd ~= "DamageRadius")

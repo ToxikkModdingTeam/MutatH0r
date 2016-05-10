@@ -34,7 +34,7 @@ function InitMutator(string options, out string error)
   ServerWelcomeHeader = WelcomeHeader;
   SetServerWelcomeMessage(lines, WelcomeMessage);
 
-  presetName = GetOption(options, "motd");
+  presetName = class 'Utils'.static.GetOption(options, "motd");
   if (presetName != "")
     preset = new(none, presetName) class'MotdConfig';
  
@@ -49,20 +49,6 @@ function InitMutator(string options, out string error)
     ShowWelcomeMessage(GetALocalPlayerController());
 }
 
-function string GetOption(string options, string optionName)
-{
-  local int i, j;
-  
-  optionName = "?" $ optionName $ "=";
-  i=instr(options, optionName, false, true);
-  if (i<0)
-    return "";
-  i=i+len(optionName);
-  j=instr(options, "?", false, false, i);
-  if (j < 0) 
-    j=len(options);
-  return mid(options, i, j-i);
-}
 
 function SetServerWelcomeMessage(array<string> lines1, array<string> lines2)
 {

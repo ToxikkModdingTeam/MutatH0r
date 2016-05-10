@@ -10,10 +10,9 @@ const OPT_DrawDamageRadius = "?DrawDamageRadius=";
 const OPT_Preset = "?Roq3tPreset=";
 const OPT_Mutate = "?Roq3tMutate=";
 
-var config float Knockback, KnockbackFactorOthers, KnockbackFactor, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
-var config float DamageFactorSelf, DamageRadius;
+var float Knockback, KnockbackFactorOthers, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
+var float DamageFactorSelf, DamageRadius;
 var bool DrawDamageRadius;
-var bool receivedWelcomeMessage;
 var bool AllowMutate;
 
 replication
@@ -27,51 +26,43 @@ simulated event PostBeginPlay()
   super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
   Enable('Tick');
-
-  // in NM_Standalone, messages aren't printed at this time, so set a timer
-  if (AllowMutate && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone)) 
-    SetTimer(1.0, true, 'ShowWelcomeMessage');
 }
 
 function InitMutator(string options, out string error)
 {
-  local int idx;
-  local string preset;
+  local string val;
 
   super.InitMutator(options, error);
 
-  idx = instr(caps(options), caps(OPT_Preset));
-  if (idx >= 0)
-  {
-    AllowMutate = true;
-    preset = mid(options, idx + len(OPT_Preset));
-    if (len(preset) > 0 && left(preset, 1) >= "0" && left(preset, 1) <= "9")
-      Mutate("ro preset " $ int(preset), none);
-  }
+  ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
+  DrawDamageRadius = bool(class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius));
 
-  idx = instr(caps(options), caps(OPT_DrawDamageRadius));
-  DrawDamageRadius = idx >= 0 && int(mid(options, idx + len(OPT_DrawDamageRadius))) != 0;
- 
-  idx = instr(caps(options), caps(OPT_Mutate));
-  AllowMutate = idx >= 0 && int(mid(options, idx + len(OPT_Mutate))) != 0;
+  val = class 'Utils'.static.GetOption(options, OPT_Mutate);
+  AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
 }
 
-simulated function ShowWelcomeMessage()
+function ApplyPreset(string presetName)
 {
-  local PlayerController pc;
+  local Roq3tConfig preset;
 
-  if (receivedWelcomeMessage)
-    return;
+  if (presetName == "")
+    presetName = "Preset1";
+  preset = new(none, presetName) class'Roq3tConfig';
+  preset.SetDefaults();
 
-  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
-  {
-    pc.ClientMessage("Use console command <font color='#cc0000'>mutate ro help</font> to modify the <font color='#cc0000'>Cerberus</font>.");
-    receivedWelcomeMessage = true;
-  }
-
-  if (receivedWelcomeMessage)
-    ClearTimer('ShowWelcomeMessage');
+  Knockback = preset.Knockback;
+  KnockbackFactorSelf = preset.KnockbackFactorSelf;
+  KnockbackFactorOthers = preset.KnockbackFactorOthers;
+  MinKnockbackVert = preset.MinKnockbackVert;
+  MaxKnockbackVert = preset.MaxKnockbackVert;
+  FireInterval = preset.FireInterval;
+  DamageFactorDirect = preset.DamageFactorDirect;
+  DamageFactorSplash = preset.DamageFactorSplash;
+  DamageFactorSelf = preset.DamageFactorSelf;
+  DamageRadius = preset.DamageRadius;
+  DrawDamageRadius = preset.DrawDamageRadius;
 }
+
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
@@ -82,7 +73,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   if (string(DamageType) != "CRZDmgType_RocketLauncher")
     return;
 
-  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; // FIXME: doesn't work for MaxDamage powerup
+  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; // MaxDamage (=InstigatedBy.Pawn.DamageScaling) seems to be applied later, so 100 is still ok here
   if (Injured == InstigatedBy.Pawn)
   {
     Damage *= DamageFactorSelf;
@@ -198,59 +189,8 @@ function Mutate(string MutateString, PlayerController sender)
     return;
   }
 
-  // modifications
-  if ((cmd $ arg) == "preset0")
-  {
-    Knockback=80000;
-    KnockbackFactorOthers = 1.0;
-    KnockbackFactorSelf = 1.0;
-    MinKnockbackVert = 0.0;
-    MaxKnockbackVert = 1000000.0;
-    FireInterval = 1.0;
-    DamageFactorDirect = 1.0;
-    DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0;
-    DamageRadius = 220;
-  }
-  else if ((cmd $ arg) == "preset1")
-  {
-    Knockback=80000 * 0.75;
-    KnockbackFactorOthers = 1.0;
-    KnockbackFactorSelf = 1.0 / 0.75;
-    MinKnockbackVert = 0.0;
-    MaxKnockbackVert = 100000.0;
-    FireInterval = 1.1;
-    DamageFactorDirect = 1.0;
-    DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0; // server-side self damage is twice the bootcamp dmg (66)
-    DamageRadius = 220;
-  }
-  else if ((cmd $ arg) == "preset2")
-  {
-    Knockback=80000;
-    KnockbackFactorOthers = 0.75;
-    KnockbackFactorSelf = 1.25;
-    MinKnockbackVert = 0.0;
-    MaxKnockbackVert = 1000000.0;
-    FireInterval = 1.1;
-    DamageFactorDirect = 1.0;
-    DamageFactorSplash = 1.0;
-    DamageFactorSelf = 1.0;
-    DamageRadius = 160;
-  }
-  else if ((cmd $ arg) == "preset3")
-  {
-    Knockback=80000;
-    KnockbackFactorOthers = 0.75;
-    KnockbackFactorSelf = 1.25;
-    MinKnockbackVert = 0.0;
-    MaxKnockbackVert = 1000000.0;
-    FireInterval = 0.85;
-    DamageFactorDirect = 1.0;
-    DamageFactorSplash = 0.5;
-    DamageFactorSelf = 2.0; // combines with Splash factor to 1.0
-    DamageRadius = 220;
-  }
+  if (cmd == "preset")
+    ApplyPreset("preset" $ arg);
   else if (cmd ~= "KnockbackFactorOthers")
     KnockbackFactorOthers = float(arg);
   else if (cmd ~= "KnockbackFactorSelf")
