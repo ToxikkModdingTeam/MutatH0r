@@ -19,7 +19,7 @@ Alternatively you can use the [Toxikk Server Launcher](https://github.com/Toxikk
 | <a href="#InstaBounce">InstaBounce</a>
 
 **Gameplay Mutators:**  
-<a href="#DmgPlume">Damage Plumes (+ Crosshair Names)</a>
+<a href="#DmgPlume">Damage Plumes</a>
 | <a href="#RegenDecay">Regen/Decay</a>
 | <a href="#Vampire">Vampire</a>
 | <a href="#Piledriver">Piledriver</a>
@@ -39,7 +39,7 @@ Alternatively you can use the [Toxikk Server Launcher](https://github.com/Toxikk
 
 
 <a name="DmgPlume"/>
-Damage Plumes (+ Crosshair Names)
+Damage Plumes (+ Crosshair Names + Chat Icon)
 ---
 Displays damage numbers when you hit a player. The plumes can be customized in UDKMutatH0r.ini, which contains several presets for size, color and trajectories of the numbers.  
 In your console you can select a preset with the command: plumes \<preset-name\>.   
@@ -47,6 +47,9 @@ Default presets are: off, small, large, huge - and you can add new ones if you l
 
 This mutator also draws the name of the person you are aiming at on top of your crosshair.  
 You can turn this on/off with the console command: CrosshairNames 0/1
+
+It also draws a chat bubble on top of a player's head when he he is typing in the console.  
+You can turn this on/off with the console command: ChatIcon 0/1
 
 Watch it on [YouTube](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)   
 
