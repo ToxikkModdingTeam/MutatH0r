@@ -2,7 +2,7 @@ TOXIKK MutatH0r Pack
 ===
 
 To install the package on your PC, simply subscribe to [Steam Workshop item 603855831](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831)     
-The donwloaded files can be found in SteamApps\\workshop\\content\\324810\\603855831
+The downloaded files can be found in SteamApps\\workshop\\content\\324810\\603855831
 
 To install it on a dedicated server, you can use steamcmd.exe to download the workshop item.  
 The Toxikk 0.94 dedicated server doesn't automatically copy the files to the right location, so you have to do it manually:  
@@ -41,22 +41,21 @@ Alternatively you can use the [Toxikk Server Launcher](https://github.com/Toxikk
 <a name="DmgPlume"/>
 Damage Plumes (+ Crosshair Names)
 ---
-Displays damage numbers when you hit a player: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)   
-The plumes can be configured through UDKMutatH0r.ini, which contains several presets for size, color and trajectories of the numbers.  
+Displays damage numbers when you hit a player. The plumes can be customized in UDKMutatH0r.ini, which contains several presets for size, color and trajectories of the numbers.  
 In your console you can select a preset with the command: plumes \<preset-name\>.   
-Default presets are: off, small, large, huge.
-You can modify them or add new ones as you like.
+Default presets are: off, small, large, huge - and you can add new ones if you like.
 
 This mutator also draws the name of the person you are aiming at on top of your crosshair.  
 You can turn this on/off with the console command: CrosshairNames 0/1
 
+Watch it on [YouTube](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)   
 
 <a name="SuperStingray"/>
 SuperStingray
 ---
 Stingray plasma ball is reduced to 17 dmg/hit (from 35) but it has splash damage and knockback.  
 This allows you to climb up walls!
-
+Watch it on [YouTube](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 
 <a name="Roq3t"/>
 Roq3t
@@ -91,6 +90,7 @@ Piledriver
 ---
 Jump on a player's head to stomp him into the ground.
 Jump on him again before he digs himself out to deal 300 damage.
+Watch it on [YouTube](https://www.youtube.com/watch?v=t2alOY7GfFA&index=4&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 
 
 <a name="StimHead"/>
