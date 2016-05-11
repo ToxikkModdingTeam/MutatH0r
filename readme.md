@@ -1,46 +1,54 @@
-TOXIKK Mutator Pack
+TOXIKK MutatH0r Pack
 ===
 
-Installation through [Steam Workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831):   
-SteamApps\\workshop\\content\\324810\\603855831
+To install the package on your PC, simply subscribe to [Steam Workshop item 603855831](http://steamcommunity.com/sharedfiles/filedetails/?id=603855831)     
+The donwloaded files can be found in SteamApps\\workshop\\content\\324810\\603855831
 
-Manual installation (without Steam Workshop):   
-SteamApps\\common\\TOXIKK\\UDKGame\\Script\\[MutatH0r.u](http://toxikk.beham.biz/toxikkredirect2/MutatH0r.u)
-SteamApps\\common\\TOXIKK\\UDKGame\\Config\\[UDKMutatH0r.ini](http://toxikk.beham.biz/toxikkredirect2/UDKMutatH0r.ini)
+To install it on a dedicated server, you can use steamcmd.exe to download the workshop item.  
+The Toxikk 0.94 dedicated server doesn't automatically copy the files to the right location, so you have to do it manually:  
+SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Script\\[MutatH0r.u](http://tox1.beham.biz/toxikkredirect2/MutatH0r.u)  
+SteamApps\\common\\TOXIKK\\UDKGame\\Workshop\\Config\\[UDKMutatH0r.ini](http://tox1.beham.biz/toxikkredirect2/UDKMutatH0r.ini)
+
+Alternatively you can use the [Toxikk Server Launcher](https://github.com/ToxikkModdingTeam/ToxikkServerLauncher) to automate this process and manage your server configuration(s).
 
 
-The INI file settings are optimized for a server that runs a combination of Vampire + Regen/Decay + Stim Head.
-
-**Included Mutators:**
-
-<a href="#DmgPlume">Damage Plumes</a>
-| <a href="#SuperStingray">SuperStingray</a>
+**Weapon Mutators:**  
+<a href="#SuperStingray">SuperStingray</a>
 | <a href="#Roq3t">Roq3t</a>
-| <a href="#RegenDecay">Regen/Decay</a>
 | <a href="#Loadout">Loadout</a>
+| <a href="#InstaBounce">InstaBounce</a>
+
+**Gameplay Mutators:**  
+<a href="#DmgPlume">Damage Plumes (+ Crosshair Names)</a>
+| <a href="#RegenDecay">Regen/Decay</a>
 | <a href="#Vampire">Vampire</a>
 | <a href="#Piledriver">Piledriver</a>
 | <a href="#StimHead">StimHead</a>
 | <a href="#PulseHead">PulseHead</a>
 | <a href="#ComboGib">ComboGib</a>
-| <a href="#InstaBounce">InstaBounce</a>
 | <a href="#InstaCcBoost">InstaCC Boost</a>
 | <a href="#Gravity">Gravity</a>
+
+**Server Management:**  
+<a href="#Motd">MOTD</a>
+| <a href="#SaveShaderCache">SaveShaderCache</a>
 | <a href="#TickRate">TickRate</a>
 | <a href="#ServerDescription">ServerDescription</a>
-| <a href="#SaveShaderCache">SaveShaderCache</a>
+
 <p>
 
 
 <a name="DmgPlume"/>
-Damage Plumes
+Damage Plumes (+ Crosshair Names)
 ---
-Pops out a number over your target's head whenever you hit it: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)   
-The plumes can be configured through UDKMutatH0r.ini, which can hold sections for multiple plume presets like
-\[Small DmgPlumeConfig\], ...   
+Displays damage numbers when you hit a player: [YouTube](https://www.youtube.com/watch?v=QYlPOBKEHio)   
+The plumes can be configured through UDKMutatH0r.ini, which contains several presets for size, color and trajectories of the numbers.  
 In your console you can select a preset with the command: plumes \<preset-name\>.   
-Default presets are: off, small, large.
-You can modify them or add new ones as you see fit.
+Default presets are: off, small, large, huge.
+You can modify them or add new ones as you like.
+
+This mutator also draws the name of the person you are aiming at on top of your crosshair.  
+You can turn this on/off with the console command: CrosshairNames 0/1
 
 
 <a name="SuperStingray"/>
@@ -128,6 +136,20 @@ Gravity
 Allows you to change gravity to any value you like. The value must be configured in MutatH0r.ini
 
 
+<a name="#Motd"/>
+MOTD
+---
+This mutator shows a welcome message to players connecting to your server.
+The message can be configured in UDKMutatH0r.ini, section \[MutatH0r.CRZMutator_Motd\].
+
+<a name="SaveShaderCache"/>
+SaveShaderCache
+---
+Utility mutator for dedicated servers running custom maps.  
+Many custom maps don't contain cached shader data, which causes extremely long map loading times and clients to time out.  
+With this mutator the server saves the data, so maps load faster the next time.  
+
+
 <a name="TickRate"/>
 TickRate
 ---
@@ -139,11 +161,3 @@ This allows players and server admins to detect when the server is underpowered 
 ServerDescription
 ---
 Utility mutator that allows changing server names as part of the map voting process.
-
-
-<a name="SaveShaderCache"/>
-SaveShaderCache
----
-Utility mutator for dedicated servers running custom maps.  
-Many custom maps don't contain cached shader data, which causes extremely long map loading times and clients to time out.  
-With this mutator the server saves the data, so maps load faster the next time.  
