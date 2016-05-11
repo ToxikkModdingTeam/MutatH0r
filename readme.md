@@ -58,16 +58,18 @@ You can turn this on/off with the console command: ChatIcon 0/1
 SuperStingray
 ---
 [![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
-Stingray plasma ball is reduced to 17 dmg/hit (from 35) but it has splash damage and knockback.  
-This allows you to climb up walls!
+Stingray plasma ball damage is reduced from 35 to 17, but it has splash damage, knockback, vertical levitation 
+and charges the victim with 8 points of combo damage (per ball hit) that will be added to a beam-hit within the next 2 seconds.  
+The knockback and levitation of the balls allows you to climb up walls or set up your opponent for a finishing mid-air hit!  
+All these values can be configured individually in the INI.  
 
 
 <a name="Roq3t"/>
 Roq3t
 ---
-Direct rocket hits deal 120 damage, but any splash is reduced to 0.5x regular.  
-Knockback is increased to 1.5x and self-damage is disabled.  
-All of that can be configured individually in the INI.  
+Splash is reduced to 75% regular, direct rocket hits still deal 100 damage. The reload time is increased from 1.0 to 1.1 seconds.    
+Knockback on other players is decreased to 75%, but increased on yourself for better rocket jumping.  
+All these values can be configured individually in the INI.  
 
 
 <a name="RegenDecay"/>
