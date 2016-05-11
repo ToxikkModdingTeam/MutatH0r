@@ -41,6 +41,7 @@ Alternatively you can use the [Toxikk Server Launcher](https://github.com/Toxikk
 <a name="DmgPlume"/>
 Damage Plumes (+ Crosshair Names + Chat Icon)
 ---
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 Displays damage numbers when you hit a player. The plumes can be customized in UDKMutatH0r.ini, which contains several presets for size, color and trajectories of the numbers.  
 In your console you can select a preset with the command: plumes \<preset-name\>.   
 Default presets are: off, small, large, huge - and you can add new ones if you like.
@@ -51,14 +52,15 @@ You can turn this on/off with the console command: CrosshairNames 0/1
 It also draws a chat bubble on top of a player's head when he he is typing in the console.  
 You can turn this on/off with the console command: ChatIcon 0/1
 
-[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)   
+
 
 <a name="SuperStingray"/>
 SuperStingray
 ---
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 Stingray plasma ball is reduced to 17 dmg/hit (from 35) but it has splash damage and knockback.  
 This allows you to climb up walls!
-[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
+
 
 <a name="Roq3t"/>
 Roq3t
@@ -91,9 +93,9 @@ When you deal damage, 75% of it is given to you as health.
 <a name="Piledriver"/>
 Piledriver
 ---
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=t2alOY7GfFA&index=4&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 Jump on a player's head to stomp him into the ground.
 Jump on him again before he digs himself out to deal 300 damage.
-[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=t2alOY7GfFA&index=4&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 
 
 <a name="StimHead"/>
