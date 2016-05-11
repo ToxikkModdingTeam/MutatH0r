@@ -51,14 +51,14 @@ You can turn this on/off with the console command: CrosshairNames 0/1
 It also draws a chat bubble on top of a player's head when he he is typing in the console.  
 You can turn this on/off with the console command: ChatIcon 0/1
 
-Watch it on [YouTube](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)   
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=LwrI_aHPmjI&index=2&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)   
 
 <a name="SuperStingray"/>
 SuperStingray
 ---
 Stingray plasma ball is reduced to 17 dmg/hit (from 35) but it has splash damage and knockback.  
 This allows you to climb up walls!
-Watch it on [YouTube](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://youtu.be/ZvjHNeY2zy4?list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 
 <a name="Roq3t"/>
 Roq3t
@@ -93,7 +93,7 @@ Piledriver
 ---
 Jump on a player's head to stomp him into the ground.
 Jump on him again before he digs himself out to deal 300 damage.
-Watch it on [YouTube](https://www.youtube.com/watch?v=t2alOY7GfFA&index=4&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
+[![YouTube](https://s.ytimg.com/yts/img/favicon_32-vfl8NGn4k.png)](https://www.youtube.com/watch?v=t2alOY7GfFA&index=4&list=PL8ONLZo3lkynxM1w9N9orTT-EJEjoXCVC)
 
 
 <a name="StimHead"/>
