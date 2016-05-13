@@ -31,6 +31,7 @@ function InitMutator(string options, out string error)
 
   super.InitMutator(options, error);
 
+  lines.Length = 0;
   ServerWelcomeHeader = WelcomeHeader;
   SetServerWelcomeMessage(lines, WelcomeMessage);
 

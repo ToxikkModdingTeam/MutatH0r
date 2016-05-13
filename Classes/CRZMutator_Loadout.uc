@@ -76,7 +76,6 @@ function ApplyOptionOverrides(string options)
   idx = instr(s, "?");
   if (idx >= 0)
     s = left(s, idx);
-  `log("Loadout=" $ s);
   if (s == "")
     return;
 

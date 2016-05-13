@@ -17,7 +17,7 @@ struct TypingInfo
 
 var config string DmgPlumeConfig;
 var config bool bDisablePlumes;
-var config bool bDisableCrosshairNames;
+//var config bool bDisableCrosshairNames;
 var config bool bDisableChatIcon;
 
 var CRZMutator_DmgPlume Mut;
@@ -72,7 +72,7 @@ simulated function AddToHUD()
  
   foreach LocalPlayerControllers(class'PlayerController', PC)
   {
-    if (CRZHudWrapper(PC.myHud) != None)
+    if (CRZHud(PC.myHud) != None)
     {
       PlumeInteraction = class'DmgPlumeInteraction'.static.Create(self, PC, true);
       ClearTimer('AddToHUD');

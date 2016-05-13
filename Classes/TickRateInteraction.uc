@@ -46,14 +46,14 @@ exec function TickRate()
 
 event PostRender(Canvas canvas)
 {
-  local CRZHudWrapper wrapper;
+  local CRZHud wrapper;
 
   super.PostRender(canvas);
 
   if (Owner == None) // actor destroyed when match is over
     return;
 
-  wrapper = CRZHudWrapper(PC.myHUD);
+  wrapper = CRZHud(PC.myHUD);
   if (wrapper == None)
     return;
   

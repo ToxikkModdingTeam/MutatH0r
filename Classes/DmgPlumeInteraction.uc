@@ -7,8 +7,8 @@ var DmgPlumeActor Owner;
 
 // static
 var Font PlumeFont;
-var Font CrosshairNameFont;
-var Color CrosshairNameColor;
+var Font TextFont;
+//var Color CrosshairNameColor;
 var Color TypingIconColor;
 var Color TypingIconBackColor;
 var Texture2D TypingIconImage;
@@ -87,14 +87,14 @@ exec function Plumes(optional string preset)
   }    
 }
 
-exec function CrosshairNames(bool show)
-{
-  if (Owner != None)
-  {
-    Owner.bDisableCrosshairNames = !show;
-    Owner.SaveConfig();
-  }
-}
+//exec function CrosshairNames(bool show)
+//{
+//  if (Owner != None)
+//  {
+//    Owner.bDisableCrosshairNames = !show;
+//    Owner.SaveConfig();
+//  }
+//}
 
 exec function ChatIcon(bool show)
 {
@@ -112,8 +112,8 @@ event PostRender(Canvas canvas)
 
   if (!Owner.bDisablePlumes)
     RenderDamagePlumes(canvas);
-  if (!Owner.bDisableCrosshairNames)
-    RenderCrosshairName(canvas);
+  //if (!Owner.bDisableCrosshairNames)
+  //  RenderCrosshairName(canvas);
   if (!Owner.bDisableChatIcon)
     RenderTypingIcon(canvas);
 }
@@ -163,28 +163,28 @@ function RenderDamagePlumes(Canvas canvas)
   }
 }
 
-function RenderCrosshairName(Canvas canvas)
-{
-  local CRZPawn target;
-  local Vector start, end, hitLocation, hitNormal;
-  local Rotator rot;
-  local float width, height;
+//function RenderCrosshairName(Canvas canvas)
+//{
+//  local CRZPawn target;
+//  local Vector start, end, hitLocation, hitNormal;
+//  local Rotator rot;
+//  local float width, height;
 
-  if (PC.Pawn == None)
-    return;
+//  if (PC.Pawn == None)
+//    return;
   
-  PC.GetPlayerViewPoint(start, rot);
-  end = start + vector(rot) * 10000;
-  target = CRZPawn(PC.Pawn.Trace(hitLocation, hitNormal, end, start));
-  if (target != None && target.PlayerReplicationInfo != None && target.CurrentStealthFactor <= 0.5)
-  {
-    canvas.Font = CrosshairNameFont;
-    canvas.TextSize(target.PlayerReplicationInfo.PlayerName, width, height, 1.0, 1.0);
-    canvas.SetPos(canvas.ClipX / 2 - width / 2, canvas.ClipY * 4 / 10 - height / 2);
-    canvas.DrawColor = CrosshairNameColor;
-    canvas.DrawText(target.PlayerReplicationInfo.PlayerName, false, 1.0, 1.0);
-  }
-}
+//  PC.GetPlayerViewPoint(start, rot);
+//  end = start + vector(rot) * 10000;
+//  target = CRZPawn(PC.Pawn.Trace(hitLocation, hitNormal, end, start));
+//  if (target != None && target.PlayerReplicationInfo != None && target.CurrentStealthFactor <= 0.5)
+//  {
+//    canvas.Font = TextFont;
+//    canvas.TextSize(target.PlayerReplicationInfo.PlayerName, width, height, 1.0, 1.0);
+//    canvas.SetPos(canvas.ClipX / 2 - width / 2, canvas.ClipY * 4 / 10 - height / 2);
+//    canvas.DrawColor = CrosshairNameColor;
+//    canvas.DrawText(target.PlayerReplicationInfo.PlayerName, false, 1.0, 1.0);
+//  }
+//}
 
 function RenderTypingIcon(Canvas canvas)
 {
@@ -195,7 +195,7 @@ function RenderTypingIcon(Canvas canvas)
   local float dist, scale;
   local Rotator rot;
 
-  canvas.Font = CrosshairNameFont;
+  canvas.Font = TextFont;
   canvas.DrawColor = TypingIconColor;
   PC.GetPlayerViewPoint(start, rot);
 
@@ -276,8 +276,8 @@ event NotifyGameSessionEnded()
 DefaultProperties
 {
   PlumeFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
-  CrosshairNameFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
-  CrosshairNameColor=(R=255,G=255,B=255,A=255)
+  TextFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
+//  CrosshairNameColor=(R=255,G=255,B=255,A=255)
   TypingIconBackColor=(R=0,G=0,B=255,A=128)
   TypingIconColor=(R=255,G=255,B=255,A=255)  
 }
