@@ -1,5 +1,5 @@
 @echo off
-cd /d %~dp0
+cd /d "%~dp0"
 setlocal
 set error=0
 del F:\games\Steam\SteamApps\common\TOXIKK\UDKGame\Script\MutatH0r.u

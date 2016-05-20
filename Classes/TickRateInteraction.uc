@@ -1,4 +1,4 @@
-class TickRateInteraction extends Interaction;
+class TickRateInteraction extends Interaction config (MutatH0r);
 
 // defined at initialization
 var PlayerController PC;
@@ -6,11 +6,11 @@ var CRZMutator_TickRate Owner;
 
 // static
 var Font MessageFont;
-var Color TextColor;
+var Color TextColorGreen, TextColorYellow, TextColorRed, TextColorWhite;
 var Color BackgroundColor;
 
 // instance
-var bool Visible;
+var config bool Disabled;
 
 static function TickRateInteraction Create(CRZMutator_TickRate theOwner, PlayerController controller, optional bool bReturnExisting=true)
 {
@@ -39,9 +39,10 @@ function Initialized()
   PC = GameViewportClient(Outer).GetPlayerOwner(0).Actor;
 }
 
-exec function TickRate()
+exec function ShowServerFPS(bool show)
 {
-  Visible = !Visible;
+  self.Disabled = !show;
+  self.SaveConfig();
 }
 
 event PostRender(Canvas canvas)
@@ -50,18 +51,15 @@ event PostRender(Canvas canvas)
 
   super.PostRender(canvas);
 
+  if (Disabled)
+    return;
   if (Owner == None) // actor destroyed when match is over
     return;
-
   wrapper = CRZHud(PC.myHUD);
-  if (wrapper == None)
-    return;
-  
-  if (wrapper.CurrentHudMode == HM_Intro)
+  if (wrapper == None || wrapper.CurrentHudMode == HM_Intro)
     return;
 
-  if (Visible)
-    RenderTickRate(canvas);
+  RenderTickRate(canvas);
 }
 
 function RenderTickRate(Canvas canvas)
@@ -73,13 +71,21 @@ function RenderTickRate(Canvas canvas)
   y = 33;
   canvas.DrawColor = BackgroundColor;
   canvas.SetPos(x, y);
-  canvas.DrawRect(50, 30);
+  canvas.DrawRect(50, 60);
   
-  // draw header + message
-  canvas.DrawColor = TextColor; 
+  // draw number
+  canvas.DrawColor = owner.TickRate >= 57 ? TextColorGreen : owner.TickRate >= 50 ? TextColorYellow : TextColorRed; 
   canvas.Font = MessageFont;
   canvas.SetPos(x + 5, y + 2);
   canvas.DrawText(string(owner.TickRate), false, 1.0, 1.0);
+
+  // draw "Server FPS"
+  canvas.DrawColor = TextColorWhite;
+  canvas.SetPos(x + 5, y + 28);
+  canvas.DrawText("Server", false, 0.5, 0.5);
+  canvas.SetPos(x + 5, y + 45);
+  canvas.DrawText("FPS", false, 0.5, 0.5);
+
 }
 
 event NotifyGameSessionEnded()
@@ -92,7 +98,9 @@ event NotifyGameSessionEnded()
 DefaultProperties
 {
   MessageFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
-  TextColor=(R=255,G=255,B=255,A=255)
-  BackgroundColor=(R=0, G=0, B=0, A=128)
-  Visible = true
+  TextColorGreen=(R=255,G=255,B=255,A=128)
+  TextColorYellow=(R=255,G=200,B=0,A=200)
+  TextColorRed=(R=255,G=40,B=40,A=255)
+  TextColorWhite=(R=255,G=255,B=255,A=200)
+  BackgroundColor=(R=0, G=0, B=0, A=64)
 }

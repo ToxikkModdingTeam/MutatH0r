@@ -93,7 +93,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     PlumeReceivers[i].Victims[j].Victim = Injured;
     PlumeReceivers[i].Victims[j].RepItem.Location = Injured.Location + vect(0,0,1)*(Injured.CylinderComponent.CollisionHeight + 3);
   }
-  PlumeReceivers[i].Victims[j].RepItem.Value += round(Damage * pc.Pawn.DamageScaling);
+  PlumeReceivers[i].Victims[j].RepItem.Value += pc.Pawn == None ? Damage : round(Damage * pc.Pawn.DamageScaling); // attacker may have died before his projectile deals damage
 }
 
 function Tick(float deltaTime)

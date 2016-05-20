@@ -5,11 +5,17 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_TickRate extends UTMutator;
+class CRZMutator_TickRate extends UTMutator config (MutatH0r);
 
 var float serverTime;
 var int serverTickCount;
 var int TickRate;
+
+var config bool LogCurrentTicks;
+var config bool LogSummaryTicks;
+var int tickCount[61];
+var bool ready;
+var bool prevMatchIsOver;
 
 replication
 {
@@ -23,6 +29,7 @@ simulated function PostBeginPlay()
 
   if (WorldInfo.NetMode == NM_Client) // only a client has a local player controller when PostBeginPlay is called
     CreateInteraction(GetALocalPlayerController());
+  ready = true;
 }
 
 function NotifyLogin(Controller newPlayer)
@@ -44,6 +51,9 @@ function Tick(float DeltaTime)
 {
   local float delta;
 
+  if (!ready)
+    return;
+
   if (serverTime == 0)
     serverTime = WorldInfo.RealTimeSeconds;
   else
@@ -52,13 +62,36 @@ function Tick(float DeltaTime)
     delta = WorldInfo.RealTimeSeconds - serverTime;
     if (delta >= 1)
     {
-      TickRate = int(float(serverTickCount) / delta + 0.5);
+      TickRate = int(float(serverTickCount) / delta + 0.499);
       serverTime = WorldInfo.RealTimeSeconds;
       serverTickCount = 0;
+      ++tickCount[clamp(TickRate,0,60)];
+
+      // write ticks to server log, if enabled via config
+      if (LogCurrentTicks)
+        `Log("Ticks: " $ TickRate);
+    }
+  }
+
+  // write map summary stats to server log
+  if (WorldInfo.GRI.bMatchIsOver != prevMatchIsOver && WorldInfo.GRI.bMatchIsOver)
+    LogSummary();
+  prevMatchIsOver = WorldInfo.GRI.bMatchIsOver;
+}
+
+function LogSummary()
+{
+  local int i;
+
+  if (LogSummaryTicks)
+  {
+    for (i=0; i<ArrayCount(tickCount); i++)
+    {
+      `Log("Tick count " $ i $ ": " $ tickCount[i]);
+      tickCount[i]=0;
     }
   }
 }
-
 
 defaultproperties
 {
