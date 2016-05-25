@@ -9,8 +9,6 @@ var DmgPlumeActor Owner;
 var Font PlumeFont;
 var Font TextFont;
 //var Color CrosshairNameColor;
-var Color TypingIconColor;
-var Color TypingIconBackColor;
 var Texture2D TypingIconImage;
 
 
@@ -39,8 +37,6 @@ function Initialized()
 {
   Viewport = GameViewportClient(Outer);
   PC = Viewport.GetPlayerOwner(0).Actor;
-
-  TypingIconImage = Texture2D(DynamicLoadObject("MutatH0r_Content.ChatBubble", class'Texture2D', true));
 }
  
 exec function Plumes(optional string preset)
@@ -195,8 +191,10 @@ function RenderTypingIcon(Canvas canvas)
   local float dist, scale;
   local Rotator rot;
 
+  if (TypingIconImage == None)
+    return;
+
   canvas.Font = TextFont;
-  canvas.DrawColor = TypingIconColor;
   PC.GetPlayerViewPoint(start, rot);
 
   foreach PC.WorldInfo.AllPawns(class'CRZPawn', pawn)
@@ -221,26 +219,11 @@ function RenderTypingIcon(Canvas canvas)
       {
         end = pawn.Location + vect(0,0,1)*pawn.EyeHeight;
         dist = VSize(end-start);
+        scale = (100/FMax(dist,75)+0.15) * canvas.ClipY/1440;
+
         v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);
-        scale = FMax((1200-dist)/600, 0.5);
-        if (TypingIconImage == None)
-        {
-          // fallback drawing when client doesn't have the .upk with the chat bubble image
-          canvas.SetPos(v.X - 30 * scale, v.Y - 35*scale);
-          canvas.DrawColor = TypingIconBackColor;
-          canvas.DrawRect(60*scale, 30*scale);
-          canvas.DrawColor = TypingIconColor;
-          canvas.SetPos(v.X - 30*scale, v.Y - 35*scale);
-          canvas.DrawBox(60*scale, 30*scale);
-          canvas.SetPos(v.X - 25*scale, v.Y - 33*scale);
-          canvas.SetPos(v.X - 25*scale, v.Y - 33*scale);
-          canvas.DrawText("#$?!", false, scale, scale);
-        }
-        else
-        {
-          canvas.SetPos(v.X - 25 * scale, v.Y - 27*scale);
-          canvas.DrawTexture(TypingIconImage, 0.075*scale);
-        }
+        canvas.SetPos(v.X - 64 * scale, v.Y - 128 * scale);
+        canvas.DrawTexture(TypingIconImage, scale);
       }
       break;
     }
@@ -278,6 +261,5 @@ DefaultProperties
   PlumeFont=Font'KismetGame_Assets.Fonts.JazzFont_05'
   TextFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
 //  CrosshairNameColor=(R=255,G=255,B=255,A=255)
-  TypingIconBackColor=(R=0,G=0,B=255,A=128)
-  TypingIconColor=(R=255,G=255,B=255,A=255)  
+  TypingIconImage = Texture2D'MutatH0r_Content.ChatBubble'
 }
