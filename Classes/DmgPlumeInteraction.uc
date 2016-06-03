@@ -8,9 +8,11 @@ var DmgPlumeActor Owner;
 // static
 var Font PlumeFont;
 var Font TextFont;
+var Color White, Red, Blue;
 //var Color CrosshairNameColor;
 var Texture2D TypingIconImage;
 
+var array<Color> colorTable;
 
 static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerController controller, optional bool bReturnExisting=true)
 {
@@ -35,10 +37,45 @@ static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerControl
  
 function Initialized()
 {
+  local int i;
+  local LinearColor linCol;
+  local float cmax, cmin, delta, h, s, l, c, x, m, r, g, b;
+
   Viewport = GameViewportClient(Outer);
   PC = Viewport.GetPlayerOwner(0).Actor;
+
+  colorTable.Length = class'Cruzade.CRZFamilyInfo_Mercenary'.default.PrimaryColors.Length;
+  for (i=0; i<colorTable.Length; i++)
+  {
+    class'CRZFamilyInfo_Mercenary'.static.GetCharacterPrimaryColor(i, linCol);
+    
+    // convert RGB to HSL
+    cmax = fmax(fmax(linCol.R, linCol.G), linCol.B);
+    cmin = fmin(fmin(linCol.R, linCol.G), linCol.B);
+    delta = cmax - cmin;
+    x = (linCol.G - linCol.B)/delta;
+    h = 60.0 * (delta == 0 ? 0.0 : (cmax == linCol.R) ? (x % 6 + (x-int(x))) : (cmax == linCol.G) ? ((linCol.B - linCol.R)/delta + 2) : ((linCol.R - linCol.G)/delta + 4));
+    l = (cmin + cmax)/2;
+    s = delta == 0 ? 0.0 : delta / (1.0-abs(2.0*l-1.0));
+
+    // change lightness
+    l = 0.85;
+
+    // convert back to RGB
+    c = (1 - abs(2*l - 1)) * s;
+    x = c * (1 - abs(int(h/60) % 2 - 1));
+    m = l - c/2;
+    if (h<60) { r=c; g=x; b=0; }
+    else if (h<120) { r=x; g=c; b=0; }
+    else if (h<180) { r=0; g=c; b=x; }
+    else if (h<240) { r=0; g=x; b=c; }
+    else if (h<300) { r=x; g=0; b=c; }
+    else { r=c; g=0; b=x; }
+    
+    colorTable[i] = MakeColor((r+m)*255, (g+m)*255, (b+m)*255, 204);
+  }
 }
- 
+
 exec function Plumes(optional string preset)
 {
   local array<string> names;
@@ -190,6 +227,7 @@ function RenderTypingIcon(Canvas canvas)
   local vector start, end;
   local float dist, scale;
   local Rotator rot;
+  local CRZPlayerReplicationInfo pri;
 
   if (TypingIconImage == None)
     return;
@@ -211,6 +249,8 @@ function RenderTypingIcon(Canvas canvas)
     if (!PC.CanSee(pawn))
       continue;
 
+    pri = CRZPlayerReplicationInfo(pawn.PlayerReplicationInfo);
+
     for (i=0; i<Owner.areTyping.Length; i++)
     {
       if (owner.areTyping[i].PlayerId != playerId)
@@ -221,8 +261,11 @@ function RenderTypingIcon(Canvas canvas)
         dist = VSize(end-start);
         scale = (100/FMax(dist,75)+0.15) * canvas.ClipY/1440;
 
-        v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);
+        v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);        
         canvas.SetPos(v.X - 64 * scale, v.Y - 128 * scale);
+        canvas.DrawColor = (PC.WorldInfo.Game != none && PC.WorldInfo.Game.bTeamGame) 
+          ? (pawn.PlayerReplicationInfo.Team.TeamIndex == 0 ? Red : Blue) 
+          : (pri == none ? White : colorTable[pri.CharacterData.PrimaryColorIndex]);
         canvas.DrawTexture(TypingIconImage, scale);
       }
       break;
@@ -262,4 +305,7 @@ DefaultProperties
   TextFont=Font'UI_Fonts.Fonts.UI_Fonts_Positec18'
 //  CrosshairNameColor=(R=255,G=255,B=255,A=255)
   TypingIconImage = Texture2D'MutatH0r_Content.ChatBubble'
+  White = (R=255, G=255, B=255, A=204)
+  Red = (R=255, G=220, B=220, A=204)
+  Blue = (R=220, G=220, B=255, A=204)
 }

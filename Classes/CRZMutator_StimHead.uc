@@ -14,8 +14,8 @@ var config float MaxSize;
 function InitMutator(string Options, out string ErrorMessage)
 {
 	Super.InitMutator(Options, ErrorMessage);
-	MinSize = Max(MinSize, 0.5);
-	MaxSize = Min(MaxSize, 3.0);
+	MinSize = FMax(MinSize, 0.5);
+	MaxSize = FMin(MaxSize, 3.0);
 	SetTimer(0.05, true);
 }
 
