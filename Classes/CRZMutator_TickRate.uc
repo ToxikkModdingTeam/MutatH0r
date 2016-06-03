@@ -74,9 +74,9 @@ function Tick(float DeltaTime)
   {
     ++serverTickCount;
     delta = time - prevTime;
-    if (delta >= 1000)
+    if (delta >= 995) // 5ms margin for finishing a tick too early
     {
-      TickRate = int(float(serverTickCount * 1000) / delta);
+      TickRate = serverTickCount;
       prevTime = time;
       serverTickCount = 0;
       ++tickCount[clamp(TickRate,0,60)];
