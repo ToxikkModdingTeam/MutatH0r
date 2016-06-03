@@ -1,5 +1,7 @@
 class DmgPlumeInteraction extends Interaction;
 
+const DrawChatIconOnAllPlayersForTesting = false;
+
 // defined at initialization
 var GameViewportClient Viewport;
 var PlayerController PC;
@@ -38,8 +40,8 @@ static function DmgPlumeInteraction Create(DmgPlumeActor theOwner, PlayerControl
 function Initialized()
 {
   local int i;
-  local LinearColor linCol;
-  local float cmax, cmin, delta, h, s, l, c, x, m, r, g, b;
+  local LinearColor rgb;
+  local float h, s, l;
 
   Viewport = GameViewportClient(Outer);
   PC = Viewport.GetPlayerOwner(0).Actor;
@@ -47,33 +49,68 @@ function Initialized()
   colorTable.Length = class'Cruzade.CRZFamilyInfo_Mercenary'.default.PrimaryColors.Length;
   for (i=0; i<colorTable.Length; i++)
   {
-    class'CRZFamilyInfo_Mercenary'.static.GetCharacterPrimaryColor(i, linCol);
-    
-    // convert RGB to HSL
-    cmax = fmax(fmax(linCol.R, linCol.G), linCol.B);
-    cmin = fmin(fmin(linCol.R, linCol.G), linCol.B);
-    delta = cmax - cmin;
-    x = (linCol.G - linCol.B)/delta;
-    h = 60.0 * (delta == 0 ? 0.0 : (cmax == linCol.R) ? (x % 6 + (x-int(x))) : (cmax == linCol.G) ? ((linCol.B - linCol.R)/delta + 2) : ((linCol.R - linCol.G)/delta + 4));
-    l = (cmin + cmax)/2;
-    s = delta == 0 ? 0.0 : delta / (1.0-abs(2.0*l-1.0));
-
-    // change lightness
-    l = 0.85;
-
-    // convert back to RGB
-    c = (1 - abs(2*l - 1)) * s;
-    x = c * (1 - abs(int(h/60) % 2 - 1));
-    m = l - c/2;
-    if (h<60) { r=c; g=x; b=0; }
-    else if (h<120) { r=x; g=c; b=0; }
-    else if (h<180) { r=0; g=c; b=x; }
-    else if (h<240) { r=0; g=x; b=c; }
-    else if (h<300) { r=x; g=0; b=c; }
-    else { r=c; g=0; b=x; }
-    
-    colorTable[i] = MakeColor((r+m)*255, (g+m)*255, (b+m)*255, 204);
+    class'CRZFamilyInfo_Mercenary'.static.GetCharacterPrimaryColor(i, rgb);
+    RgbToHsl(rgb, h, s, l);
+    l = 0.85; // change lightness
+    HslToRgb(h, s, l, rgb);   
+    colorTable[i] = MakeColor(rgb.R*255, rgb.G*255, rgb.B*255, 204);
   }
+}
+
+simulated function RgbToHsl(LinearColor rgb, out float h, out float s, out float l)
+{
+  local float cmax, cmin, d;
+
+  cmax = fmax(fmax(rgb.R, rgb.G), rgb.B);
+  cmin = fmin(fmin(rgb.R, rgb.G), rgb.B);
+  l = (cmin + cmax)/2.0;
+  if (cmax == cmin)
+  {
+    h = 0;
+    s = 0;
+  }
+  else
+  {
+    d = cmax - cmin;
+    s = l > 0.5 ? d / (2.0-cmax-cmin) : d/(cmax+cmin);
+    if (cmax == rgb.R) 
+      h = (rgb.G - rgb.B)/d + (rgb.G < rgb.B ? 6.0 : 0.0);
+    else if (cmax == rgb.G)
+      h = (rgb.B - rgb.R)/d + 2.0;
+    else
+      h = (rgb.R - rgb.G)/d + 4.0;
+    h /= 6.0;
+  }
+}
+
+simulated function HslToRgb(float h, float s, float l, out LinearColor rgb)
+{
+  local float q, p;
+
+  if (s == 0)
+  {
+    rgb.R = l;
+    rgb.G = l;
+    rgb.B = l;
+  }
+  else
+  {
+    q = l < 0.5 ? l * (1.0+s) : (l+s-l*s);
+    p = 2.0 * l - q;
+    rgb.R = HueToRgb(p, q, h + 1.0/3.0);
+    rgb.G = HueToRgb(p, q, h);
+    rgb.B = HueToRgb(p, q, h - 1.0/3.0);
+  }
+}
+
+simulated function float HueToRgb(float p, float q, float t)
+{
+  if (t < 0) t += 1.0;
+  if (t > 1) t -= 1.0;
+  if (t < 1.0/6.0) return p + (q - p) * 6.0 * t;
+  if (t < 1.0/2.0) return q;
+  if (t < 2.0/3.0) return p + (q - p) * (2.0/3.0 - t) * 6.0;
+  return p;
 }
 
 exec function Plumes(optional string preset)
@@ -148,7 +185,7 @@ event PostRender(Canvas canvas)
   //if (!Owner.bDisableCrosshairNames)
   //  RenderCrosshairName(canvas);
   if (!Owner.bDisableChatIcon)
-    RenderTypingIcon(canvas);
+    RenderTypingIcons(canvas);
 }
 
 function RenderDamagePlumes(Canvas canvas)
@@ -219,15 +256,12 @@ function RenderDamagePlumes(Canvas canvas)
 //  }
 //}
 
-function RenderTypingIcon(Canvas canvas)
+function RenderTypingIcons(Canvas canvas)
 {
   local int i, playerId;
   local CRZPawn pawn;
-  local vector v;
-  local vector start, end;
-  local float dist, scale;
+  local vector start;
   local Rotator rot;
-  local CRZPlayerReplicationInfo pri;
 
   if (TypingIconImage == None)
     return;
@@ -249,28 +283,40 @@ function RenderTypingIcon(Canvas canvas)
     if (!PC.CanSee(pawn))
       continue;
 
-    pri = CRZPlayerReplicationInfo(pawn.PlayerReplicationInfo);
-
-    for (i=0; i<Owner.areTyping.Length; i++)
+    if (DrawChatIconOnAllPlayersForTesting)
+      DrawChatIconForPlayer(pawn, start, canvas);
+    else
     {
-      if (owner.areTyping[i].PlayerId != playerId)
-        continue;
-      if (owner.areTyping[i].bTyping)
+      for (i=0; i<Owner.areTyping.Length; i++)
       {
-        end = pawn.Location + vect(0,0,1)*pawn.EyeHeight;
-        dist = VSize(end-start);
-        scale = (100/FMax(dist,75)+0.15) * canvas.ClipY/1440;
-
-        v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);        
-        canvas.SetPos(v.X - 64 * scale, v.Y - 128 * scale);
-        canvas.DrawColor = (PC.WorldInfo.Game != none && PC.WorldInfo.Game.bTeamGame) 
-          ? (pawn.PlayerReplicationInfo.Team.TeamIndex == 0 ? Red : Blue) 
-          : (pri == none ? White : colorTable[pri.CharacterData.PrimaryColorIndex]);
-        canvas.DrawTexture(TypingIconImage, scale);
+        if (owner.areTyping[i].PlayerId != playerId)
+          continue;
+        if (owner.areTyping[i].bTyping)
+          DrawChatIconForPlayer(pawn, start, canvas);
+        break;
       }
-      break;
     }
   }
+}
+
+simulated function DrawChatIconForPlayer(Pawn pawn, vector start, Canvas canvas)
+{
+  local vector end, v;
+  local float dist, scale;
+  local CRZPlayerReplicationInfo pri;
+
+  end = pawn.Location + vect(0,0,1)*pawn.EyeHeight;
+  dist = VSize(end-start);
+  scale = (100/FMax(dist,75)+0.15) * canvas.ClipY/1440;
+
+  pri = CRZPlayerReplicationInfo(pawn.PlayerReplicationInfo);
+
+  v = canvas.Project(pawn.Location + vect(0,0,1) * pawn.CylinderComponent.CollisionHeight);        
+  canvas.SetPos(v.X - 64 * scale, v.Y - 128 * scale);
+  canvas.DrawColor = (PC.WorldInfo.Game != none && PC.WorldInfo.Game.bTeamGame) 
+    ? (pawn.PlayerReplicationInfo.Team.TeamIndex == 0 ? Red : Blue) 
+    : (pri == none ? White : colorTable[pri.CharacterData.PrimaryColorIndex]);
+  canvas.DrawTexture(TypingIconImage, scale);
 }
 
 simulated function Color GetColor(PlumeSpriteInfo plume)

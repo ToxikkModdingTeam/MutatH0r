@@ -7,7 +7,10 @@
 
 class CRZMutator_TickRate extends UTMutator config (MutatH0r);
 
-var float serverTime;
+// NOTE: WorldInfo.RealTimeSeconds is a float and loses precision when the map is running for an expanded period of time
+// After some hours a servers starts to show 64 instead of 60ticks using the float, so we use a more accurate method now.
+var int prevDate;
+var int prevTime;
 var int serverTickCount;
 var int TickRate;
 
@@ -49,21 +52,32 @@ simulated function CreateInteraction(PlayerController pc)
 
 function Tick(float DeltaTime)
 {
-  local float delta;
+  local int y, mon, d, wd, h, min, s, ms;
+  local int date, time;
+  local int delta;
 
   if (!ready)
     return;
 
-  if (serverTime == 0)
-    serverTime = WorldInfo.RealTimeSeconds;
+  GetSystemTime(y,mon,d,wd,h,min,s,ms);
+  date = y*10000 + mon*100 + d;
+  time = h*3600000 + min*60000 + s*1000 + ms;
+
+  if (date != prevDate)
+  {
+    // initial call or when the clocks wraps from 23:59:59.999 to 00:00:00.000
+    prevDate = date;
+    prevTime = time;
+    serverTickCount = 0;
+  }
   else
   {
     ++serverTickCount;
-    delta = WorldInfo.RealTimeSeconds - serverTime;
-    if (delta >= 1)
+    delta = time - prevTime;
+    if (delta >= 1000)
     {
-      TickRate = int(float(serverTickCount) / delta + 0.499);
-      serverTime = WorldInfo.RealTimeSeconds;
+      TickRate = int(float(serverTickCount * 1000) / delta);
+      prevTime = time;
       serverTickCount = 0;
       ++tickCount[clamp(TickRate,0,60)];
 
