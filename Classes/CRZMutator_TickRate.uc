@@ -8,7 +8,7 @@
 class CRZMutator_TickRate extends UTMutator config (MutatH0r);
 
 // NOTE: WorldInfo.RealTimeSeconds is a float and loses precision when the map is running for an expanded period of time
-// After some hours a servers starts to show 64 instead of 60ticks using the float, so we use a more accurate method now.
+// After some hours a servers starts to show 64 instead of 60 ticks using the float, so I use GetSystemTime to get milliseconds
 var int prevDate;
 var int prevTime;
 var int serverTickCount;
@@ -54,43 +54,36 @@ function Tick(float DeltaTime)
 {
   local int y, mon, d, wd, h, min, s, ms;
   local int date, time;
-  local int delta;
 
   if (!ready)
     return;
 
-  GetSystemTime(y,mon,d,wd,h,min,s,ms);
+  if (prevDate != 0 && ++serverTickCount < 60)
+    return;
+  
+  GetSystemTime(y,mon,wd,d,h,min,s,ms);
   date = y*10000 + mon*100 + d;
   time = h*3600000 + min*60000 + s*1000 + ms;
 
-  if (date != prevDate)
+  if (date == prevDate)
   {
-    // initial call or when the clocks wraps from 23:59:59.999 to 00:00:00.000
-    prevDate = date;
-    prevTime = time;
-    serverTickCount = 0;
-  }
-  else
-  {
-    ++serverTickCount;
-    delta = time - prevTime;
-    if (delta >= 995) // 5ms margin for finishing a tick too early
-    {
-      TickRate = serverTickCount;
-      prevTime = time;
-      serverTickCount = 0;
-      ++tickCount[clamp(TickRate,0,60)];
+    TickRate = round(60000.0 / (time - prevTime));
+    ++tickCount[clamp(TickRate,0,60)];
 
-      // write ticks to server log, if enabled via config
-      if (LogCurrentTicks)
-        `Log("Ticks: " $ TickRate);
-    }
+    // write ticks to server log, if enabled via config
+    if (LogCurrentTicks)
+      `Log("Ticks: " $ TickRate);
+
+    // write map summary stats to server log
+    if (WorldInfo.GRI.bMatchIsOver != prevMatchIsOver && WorldInfo.GRI.bMatchIsOver)
+      LogSummary();
+    prevMatchIsOver = WorldInfo.GRI.bMatchIsOver;
   }
 
-  // write map summary stats to server log
-  if (WorldInfo.GRI.bMatchIsOver != prevMatchIsOver && WorldInfo.GRI.bMatchIsOver)
-    LogSummary();
-  prevMatchIsOver = WorldInfo.GRI.bMatchIsOver;
+  prevDate = date;
+  prevTime = time;
+  serverTickCount = 0;
+
 }
 
 function LogSummary()
