@@ -9,6 +9,8 @@ copy ..\..\..\..\UDKGame\Script_LocalBuild\PredatH0r.u .
 if errorlevel 1 set error=1
 
 copy d:\sources\ToxikkServerLauncher\ToxikkServerLauncher\MyServerConfig.ini d:\sources\ToxikkServerLauncher\ToxikkServerLauncher\bin\Debug\MyServerConfig.ini 2>nul
+copy d:\sources\ToxikkServerLauncher\ToxikkServerLauncher\MyServerConfig.ini c:\steamcmd\steamapps\common\TOXIKK\TOXIKKServers 2>nul
+copy d:\sources\ToxikkServerLauncher\ToxikkServerLauncher\bin\Debug\ToxikkServerLauncher.exe c:\steamcmd\steamapps\common\TOXIKK\TOXIKKServers 2>nul
 
 for %%d in (f:\games\Steam\SteamApps\common\TOXIKK\UDKGame c:\steamcmd\steamapps\workshop\content\324810\MutatH0r f:\games\Steam\SteamApps\common\TOXIKK\WorkshopUploader\MutatH0r\UploadContent) do (
   for %%e in (Script Content Config) do (
