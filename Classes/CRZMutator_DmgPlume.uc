@@ -1,4 +1,4 @@
-class CRZMutator_DmgPlume extends Mutator config (MutatH0r);
+class CRZMutator_DmgPlume extends CRZMutator config (MutatH0r);
 
 // structures sent from server to clients
 
@@ -175,6 +175,72 @@ function NotifyLogout(Controller C)
   }
 
   super.NotifyLogout(C);
+}
+
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+	local CRZSliderWidget Slider; 
+	local GFxObject TempObj;
+	local GFxObject DataProvider;
+	local int i,j;
+  local array<string> presetNames;
+  local string presetName;
+	local int presetIndex;
+
+	super.PopulateConfigView(ConfigView, MutatorDataProvider);
+	
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_DmgPlume');
+
+	Slider = ConfigView.AddSlider( ConfigView.ListObject1, "CRZSlider",MutatorDataProvider.ListOptions[0].OptionLabel, MutatorDataProvider.ListOptions[0].OptionDesc);
+	
+	DataProvider = ConfigView.outer.CreateArray();
+
+  if (!GetPerObjectConfigSections(class'DmgPlumeConfig', presetNames)) // names are returned in reverse order
+  {
+    presetNames.AddItem("huge");
+    presetNames.AddItem("large");
+    presetNames.AddItem("small");
+  }
+  presetNames.AddItem("off");
+
+
+  j=0;
+	for(i=presetNames.Length-1; i>=0; i--)
+	{
+    presetName = repl(locs(presetNames[i]), " dmgplumeconfig", "");
+
+		TempObj = ConfigView.MenuManager.CreateObject("Object");
+		TempObj.SetString("label", presetName);
+		DataProvider.SetElementObject(j, TempObj);
+
+    if (presetName == class'DmgPlumeActor'.default.DmgPlumeConfig)
+      presetIndex = j;
+    ++j;
+	}
+
+
+	Slider.SetObject("dataProvider", DataProvider);
+	Slider.SetString("smallSnap","1");
+	Slider.SetFloat("maximum", presetNames.Length-1);
+	Slider.SetInt("value", presetIndex);
+	
+	Slider.AddEventListener('CLIK_change', OnPresetChanged);
+}
+
+function static OnPresetChanged(GFxClikWidget.EventData ev)
+{
+  local GFxObject DataProvider;
+  local string presetName;
+
+  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_DmgPlume', 'Preset'))
+    return;
+
+	DataProvider = ev.target.GetObject("dataProvider");
+  presetName = DataProvider.GetElementObject(int(ev.target.GetFloat("value"))).GetString("label");
+
+  class'DmgPlumeActor'.default.DmgPlumeConfig = presetName;
+  class'DmgPlumeActor'.static.StaticSaveConfig();
 }
 
 DefaultProperties
