@@ -7,8 +7,6 @@
 
 class CRZMutator_InstaBounce extends CRZMutator config (MutatH0r);
 
-const StingrayClassPath = "Cruzade.CRZWeap_ScionRifle";
-
 var config float KnockbackBall;
 var config float SplashRadius;
 var config float FireInterval;
@@ -32,7 +30,7 @@ function PostBeginPlay()
 
 	Game = UTGame(WorldInfo.Game);
   Game.DefaultInventory.Length = 1;
-	Game.DefaultInventory[0] = class<Weapon>(DynamicLoadObject(StingrayClassPath, class'Class'));
+	Game.DefaultInventory[0] = class'CRZWeap_ScionRifle';
 }
 
 function bool CheckReplacement(Actor Other)
@@ -42,33 +40,24 @@ function bool CheckReplacement(Actor Other)
 
 simulated function Tick(float DeltaTime)
 {
-  local Projectile proj;
-  local UTWeapon w;
-  local Actor a;
-  local string className;
-  local int count;
+  local CRZWeap_ScionRifle w;
+  local CRZProj_ScionRifle proj;
 
-  foreach WorldInfo.DynamicActors(class'Actor', a)
+  foreach WorldInfo.DynamicActors(class'CRZWeap_ScionRifle', w)
   {
-    ++count;
-    className = string(a.Class);
-    if (instr(className, "CRZProj_Scion") == 0) // handle blue and red projectile
+    w.ShotCost[0] = 0;
+    w.ShotCost[1] = 0;
+    w.FireInterval[0] = FireInterval/100.0;
+    w.InstantHitDamage[1] = 1000;
+  }
+
+  foreach WorldInfo.DynamicActors(class'CRZProj_ScionRifle', proj)
+  {
+    if (proj.Damage != 0.01)
     {
-      proj = Projectile(a);
-      if (proj.Damage != 0.01)
-      {
-        proj.Damage = 0.01;  // damage 0 would cause the explosion/knockback code to be skipped, so we use 0.01 here
-        proj.DamageRadius = SplashRadius;
-        proj.MomentumTransfer = KnockbackBall * 1000;
-      }
-    }
-    else if (className == "CRZWeap_ScionRifle")
-    {
-      w = UTWeapon(a);
-      w.ShotCost[0] = 0;
-      w.ShotCost[1] = 0;
-      w.FireInterval[0] = FireInterval/100.0;
-      w.InstantHitDamage[1] = 1000;
+      proj.Damage = 0.01;  // damage 0 would cause the explosion/knockback code to be skipped, so we use 0.01 here
+      proj.DamageRadius = SplashRadius;
+      proj.MomentumTransfer = KnockbackBall * 1000;
     }
   }
 }
@@ -100,7 +89,6 @@ function static OnKnockbackChanged(GFxClikWidget.EventData ev)
 {
   if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'Knockback'))
     return;
-
 	default.KnockbackBall = ev.target.GetFloat("value");
 	StaticSaveConfig();
 }
@@ -109,7 +97,6 @@ function static OnSplashRadiusChanged(GFxClikWidget.EventData ev)
 {
   if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'SplashRadius'))
     return;
-
 	default.SplashRadius = ev.target.GetFloat("value");
 	StaticSaveConfig();
 }
@@ -118,7 +105,6 @@ function static OnFireIntervalChanged(GFxClikWidget.EventData ev)
 {
   if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'FireInterval'))
     return;
-
 	default.FireInterval = ev.target.GetFloat("value");
 	StaticSaveConfig();
 }
