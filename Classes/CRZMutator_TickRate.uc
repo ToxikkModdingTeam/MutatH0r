@@ -5,7 +5,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_TickRate extends UTMutator config (MutatH0r);
+class CRZMutator_TickRate extends CRZMutator config (MutatH0r);
 
 // NOTE: WorldInfo.RealTimeSeconds is a float and loses precision when the map is running for an expanded period of time
 // After some hours a servers starts to show 64 instead of 60 ticks using the float, so I use GetSystemTime to get milliseconds
@@ -98,6 +98,25 @@ function LogSummary()
       tickCount[i]=0;
     }
   }
+}
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+  local GfxClikWidget checkBox;
+
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
+  
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_TickRate');
+ 
+  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", "Show Server FPS", "Show server-side FPS to detect server lags"));
+  checkBox.SetBool("selected", !class'TickRateInteraction'.default.Disabled);	
+  checkBox.AddEventListener('CLIK_click', OnCheckboxClick);
+}
+
+static function OnCheckboxClick(GFxClikWidget.EventData ev)
+{
+  class'TickRateInteraction'.default.Disabled = !ev.target.GetBool("selected");
+  class'TickRateInteraction'.static.StaticSaveConfig();
 }
 
 defaultproperties

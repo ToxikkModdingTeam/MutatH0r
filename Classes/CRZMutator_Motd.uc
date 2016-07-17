@@ -1,4 +1,4 @@
-class CRZMutator_Motd extends Mutator config (MutatH0r);
+class CRZMutator_Motd extends CRZMutator config (MutatH0r);
 
 /*
  * replicating long strings from server to client requires a bit of a hack:
@@ -102,6 +102,33 @@ simulated function ShowWelcomeMessage(PlayerController pc)
     return;  
   class'MotdInteraction'.static.Create(self, pc, true);
 }
+
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
+  
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Motd');
+ 
+  AddLabel(ConfigView, "To configure your Welcome");
+  AddLabel(ConfigView, "Message, open the file");
+  AddLabel(ConfigView, "UDKGame/Config/UDKMutatH0r.ini");
+  AddLabel(ConfigView, "and edit settings in section");
+  AddLabel(ConfigView, "[MutatH0r.CRZMutator_Motd]"); 
+}
+
+private static function AddLabel(GFxCRZFrontEnd_ModularView ConfigView, string text)
+{
+  local GfxClikWidget label;
+  local float x, y;
+   
+  label = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "Label"));
+  //label.SetString("text", text);
+  label.SetText(text);
+  label.GetPosition(x,y);
+  label.SetPosition(50,y); // manually indent the text to avoid overlapping with the vertical decoration line
+}
+
 
 DefaultProperties
 {

@@ -1,9 +1,9 @@
-class CRZMutator_Loadout extends UTMutator config(MutatH0r);
+class CRZMutator_Loadout extends CRZMutator config(MutatH0r);
 
 const OPT_LoadoutPreset = "?LoadoutPreset=";
 const OPT_Loadout = "?Loadout=";
 
-var CRZMUtator_LoadoutPreset preset;
+var CRZMutator_LoadoutPreset preset;
 var array<class<Weapon> > weapons;
 var bool InfiniteAmmo;
 
@@ -87,6 +87,7 @@ function ApplyOptionOverrides(string options)
   preset.Stingray = instr(s, "6") >= 0;
   preset.Dragoneer = instr(s, "7") >= 0;
   preset.Cerberus = instr(s, "8") >= 0;
+  preset.Hellraiser = instr(s, "9") >= 0;
   preset.AllowWeaponPickups = instr(s, "P", false, true) >= 0;
   preset.InfiniteAmmo = instr(s, "A", false, true) >= 0;
   preset.RandomWeapon = instr(s, "R", false, true) >= 0;
@@ -110,6 +111,8 @@ function InitWeapons()
     weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_FlameThrower", class'Class')));
   if (preset.Cerberus)
     weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_RocketLauncher", class'Class')));
+  if (preset.Hellraiser)
+    weapons.AddItem(class<Weapon>(DynamicLoadObject("Cruzade.CRZWeap_Hellraiser", class'Class')));
 }
 
 function SetDefaultInventory()
@@ -165,6 +168,69 @@ simulated function Tick(float DeltaTime)
     }
   }
 }
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+  local CRZMutator_LoadoutPreset preset;
+
+	super.PopulateConfigView(ConfigView, MutatorDataProvider);
+
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Loadout');
+
+  preset = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
+  AddCheckBox(ConfigView, "Infinite Ammo", "Never running out of ammo", preset.InfiniteAmmo, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Weapon Pickups", "Allow regular weapon pickups", preset.AllowWeaponPickups, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Random Gun", "Spawn with a random gun from the enabled ones below", preset.RandomWeapon, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Ravager", "Melee drill and welding tool", preset.Ravager, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Raven", "Pistol", preset.Raven, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Bullcraft", "Double barell shotgun", preset.Bullcraft, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Violator", "Assault rifle and grenade launcher", preset.Violator, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Falcon", "Sniper rifle", preset.Falcon, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Stingray", "Plasma balls and engery beam", preset.Stingray, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Dragoneer", "Flame thrower", preset.Dragoneer, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Cerberus", "Rocket launcher", preset.Cerberus, OnCheckboxClick);
+  AddCheckBox(ConfigView, "Hellraiser", "Remote controlled nuke missile", preset.Hellraiser, OnCheckboxClick);
+}
+
+private static function AddCheckBox(GFxCRZFrontEnd_ModularView ConfigView, string label, string descr, bool val, delegate<GFxClikWidget.EventListener> listener)
+{
+  local GfxClikWidget checkBox;
+ 
+  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", label, descr));
+  checkBox.SetBool("selected", val);	
+	checkBox.AddEventListener('CLIK_click', listener);
+}
+
+static function OnCheckboxClick(GFxClikWidget.EventData ev)
+{
+  local CRZMutator_LoadoutPreset preset;
+  local bool value;
+  local string label;
+
+  preset = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
+  label = ev.target.GetString("label");
+  value = ev.target.GetBool("selected");
+  `Log(label $ "=" $ value);
+
+  switch(label)
+  {
+    case "Infinite Ammo": preset.InfiniteAmmo = value; break;
+    case "Random Gun": preset.RandomWeapon = value; break;
+    case "Weapon Pickups": preset.AllowWeaponPickups = value; break;
+    case "Ravager": preset.Ravager = value; break;
+    case "Raven": preset.Raven = value; break;
+    case "Bullcraft": preset.Bullcraft = value; break;
+    case "Violator": preset.Violator = value; break;
+    case "Falcon": preset.Falcon = value; break;
+    case "Stingray": preset.Stingray = value; break;
+    case "Dragoneer": preset.Dragoneer = value; break;
+    case "Cerberus": preset.Cerberus = value; break;
+    case "Hellraiser": preset.Hellraiser = value; break;
+  }
+
+  preset.SaveConfig();
+}
+
 
 defaultproperties
 {

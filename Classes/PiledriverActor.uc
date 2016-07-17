@@ -1,7 +1,7 @@
 class PiledriverActor extends Actor;
 
 const StompDepth = 30.0;
-const DeathDepth = 35.0;
+const MinRemainingHeight = 15.0;
 const ExcavateDelay = 2;
 const ExcavateSpeed = 20.0; // = StompDepth / 1.5sec
 
@@ -21,15 +21,16 @@ simulated function PostBeginPlay()
   Enable('Tick');
 }
 
-reliable client function NotifyStomped(Pawn pawn)
+reliable client function NotifyStomped(Pawn pawn, bool disableWeapon)
 {
-  Stomp(UTPawn(pawn));
+  Stomp(UTPawn(pawn), disableWeapon);
 }
 
-simulated function bool Stomp(UTPawn injured)
+simulated function bool Stomp(UTPawn injured, bool disableWeapon)
 {
   local vector loc;
   local int i;
+  local float depth;
 
   if (injured == None)
     return false;
@@ -53,21 +54,26 @@ simulated function bool Stomp(UTPawn injured)
   Stomped[i].time = WorldInfo.TimeSeconds;
   if (Stomped[i].deltaZ == 0)
     Stomped[i].location = loc;
-  Stomped[i].deltaZ += StompDepth;
+
+  depth = FMin(StompDepth, injured.CylinderComponent.CollisionHeight - MinRemainingHeight);
+  Stomped[i].deltaZ += depth;
 
   
-  loc.Z -= StompDepth;
-  injured.CylinderComponent.SetCylinderSize(injured.CylinderComponent.CollisionRadius, injured.CylinderComponent.CollisionHeight - StompDepth);
+  loc.Z -= depth;
+  injured.CylinderComponent.SetCylinderSize(injured.CylinderComponent.CollisionRadius, injured.CylinderComponent.CollisionHeight - depth);
   injured.SetLocation(loc);
-  injured.BaseTranslationOffset -= StompDepth;
+  injured.BaseTranslationOffset -= depth;
   injured.MovementSpeedModifier = 0;
   injured.Acceleration = vect(0,0,0);
   injured.Velocity = vect(0,0,0);
   injured.bCanCrouch = false;
   injured.bJumpCapable = false;
-  injured.StopFiring();
-  injured.bNoWeaponFiring = true;
-  return Stomped[i].deltaZ >= DeathDepth;
+  if (disableWeapon)
+  {
+    injured.StopFiring();
+    injured.bNoWeaponFiring = true;
+  }
+  return depth < StompDepth;
 }
 
 simulated function Tick(float deltaTime)
