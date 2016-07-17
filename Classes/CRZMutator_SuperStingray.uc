@@ -5,7 +5,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_SuperStingray extends UTMutator config (MutatH0r);
+class CRZMutator_SuperStingray extends CRZMutator config (MutatH0r);
 
 struct TaggedPawnInfo
 {
@@ -52,10 +52,13 @@ function InitMutator(string options, out string error)
 {
   local string val;
 
+
   super.InitMutator(options, error);
 
   ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
-  DrawDamageRadius = bool(class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius));
+  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+  if (val != "")
+    DrawDamageRadius = bool(val);
   val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
   AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
 }
@@ -359,6 +362,95 @@ function ShowInfo(PlayerController pc)
   pc.ClientMessage("_____ SuperStingray settings _____");
 }
 
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+  local SuperStingrayConfig preset;
+  local GfxClikWidget checkBox;
+
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
+
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_SuperStingray');
+
+  preset = new(none, "Preset1") class'SuperStingrayConfig';
+
+  AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [17]", 0, 100, 1, preset.DamagePlasma);
+  AddSlider(ConfigView, "Damage Beam", "Damage dealt by a beam hit [45]", 0, 100, 1, preset.DamageBeam);
+  AddSlider(ConfigView, "Damage Combo", "Extra damage per ball when following up with a beam [8]", 0, 100, 1, preset.DamageCombo);
+  AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [167 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000);
+  AddSlider(ConfigView, "Fire Rate Beam", "Time between firing 2 beams [770 millisec]", 0, 2000, 10, preset.FireIntervalBeam * 1000);
+  AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [200]", 0, 350, 10, preset.KnockbackPlasma / 100);
+  AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", 0, 350, 10, preset.KnockbackBeam);
+  AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [50]", 0, 200, 5, preset.LevitationSelf);
+  AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [100]", 0, 200, 5, preset.LevitationOthers);
+  AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100);
+  AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [120]", 0, 200, 10, preset.DamageRadius);
+
+  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", "Draw Splash Rad.", "Draw a circle indicating the splash damage area"));
+  checkBox.SetBool("selected", preset.DrawDamageRadius);	
+  checkBox.AddEventListener('CLIK_click', static.OnCheckboxClick);
+}
+
+private static function AddSlider(GFxCRZFrontEnd_ModularView ConfigView, string label, string descr, float min, float max, float snap, float val)
+{
+/*
+  local CRZSliderWidget Slider; 
+
+  Slider = ConfigView.AddSlider( ConfigView.ListObject1, "CRZSlider", label, descr);
+  Slider.SetFloat("minimum", min);
+  Slider.SetFloat("maximum", max);
+  Slider.SetSnapInterval(snap);
+  Slider.SetFloat("value", val);	
+  Slider.AddEventListener('CLIK_change', OnSliderChanged);
+  */
+  class'MutConfigHelper'.static.AddSlider(ConfigView, label, descr, min, max, snap, val, static.OnSliderChanged);
+}
+
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
+{
+  local SuperStingrayConfig preset;
+
+  preset = new(none, "Preset1") class'SuperStingrayConfig';
+
+  `Log("changing " $ label $ " to " $value);
+
+  switch(label)
+  {
+    case "Damage Ball": preset.DamagePlasma = value; break;
+    case "Damage Beam": preset.DamageBeam = value; break;
+    case "Damage Combo": preset.DamageCombo = value; break;
+    case "Fire Rate Ball": preset.FireIntervalPlasma = value / 1000; break;
+    case "Fire Rate Beam": preset.FireIntervalBeam = value / 1000; break;
+    case "Knockback Ball": preset.KnockbackPlasma = value * 100; break;
+    case "Knockback Beam": preset.KnockbackBeam = value; break;
+    case "Lift yourself": preset.LevitationSelf = value; break;
+    case "Lift others": preset.LevitationOthers = value; break;
+    case "Splash Radius": preset.DamageRadius = value; break;
+    case "Self Damage %": preset.DamageFactorSelf = value/100; break;
+  }
+
+  preset.SaveConfig();
+}
+
+static function OnCheckboxClick(GFxClikWidget.EventData ev)
+{
+  local SuperStingrayConfig preset;
+  local string label;
+  local bool value;
+
+  preset = new(none, "Preset1") class'SuperStingrayConfig';
+  label = ev.target.GetString("label");
+  value = ev.target.GetBool("selected");
+
+  switch(label)
+  {
+    case "Draw Splash Rad.": preset.DrawDamageRadius = value; break;
+  }
+
+  preset.SaveConfig();
+}
+
+
 defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
@@ -372,7 +464,7 @@ defaultproperties
   //DamageCombo=50
   //KnockbackPlasma=20000
   //LevitationSelf=50
-  //ExtraUpOthers=100
+  //LevitationOthers=100
   //SelfDamageFactor=0
   GroupNames[0]="STINGRAY"
 }

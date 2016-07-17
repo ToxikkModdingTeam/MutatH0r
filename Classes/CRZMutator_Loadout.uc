@@ -171,65 +171,52 @@ simulated function Tick(float DeltaTime)
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-  local CRZMutator_LoadoutPreset preset;
+  local CRZMutator_LoadoutPreset pres;
 
-	super.PopulateConfigView(ConfigView, MutatorDataProvider);
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
 
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Loadout');
 
-  preset = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
-  AddCheckBox(ConfigView, "Infinite Ammo", "Never running out of ammo", preset.InfiniteAmmo, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Weapon Pickups", "Allow regular weapon pickups", preset.AllowWeaponPickups, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Random Gun", "Spawn with a random gun from the enabled ones below", preset.RandomWeapon, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Ravager", "Melee drill and welding tool", preset.Ravager, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Raven", "Pistol", preset.Raven, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Bullcraft", "Double barell shotgun", preset.Bullcraft, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Violator", "Assault rifle and grenade launcher", preset.Violator, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Falcon", "Sniper rifle", preset.Falcon, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Stingray", "Plasma balls and engery beam", preset.Stingray, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Dragoneer", "Flame thrower", preset.Dragoneer, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Cerberus", "Rocket launcher", preset.Cerberus, OnCheckboxClick);
-  AddCheckBox(ConfigView, "Hellraiser", "Remote controlled nuke missile", preset.Hellraiser, OnCheckboxClick);
+  pres = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Infinite Ammo", "Never running out of ammo", pres.InfiniteAmmo, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Weapon Pickups", "Allow regular weapon pickups", pres.AllowWeaponPickups, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Random Gun", "Spawn with a random gun from the enabled ones below", pres.RandomWeapon, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Ravager", "Melee drill and welding tool", pres.Ravager, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Raven", "Pistol", pres.Raven, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Bullcraft", "Double barell shotgun", pres.Bullcraft, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Violator", "Assault rifle and grenade launcher", pres.Violator, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Falcon", "Sniper rifle", pres.Falcon, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Stingray", "Plasma balls and engery beam", pres.Stingray, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Dragoneer", "Flame thrower", pres.Dragoneer, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Cerberus", "Rocket launcher", pres.Cerberus, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Hellraiser", "Remote controlled nuke missile", pres.Hellraiser, OnCheckboxClick);
 }
 
-private static function AddCheckBox(GFxCRZFrontEnd_ModularView ConfigView, string label, string descr, bool val, delegate<GFxClikWidget.EventListener> listener)
+static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
 {
-  local GfxClikWidget checkBox;
- 
-  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", label, descr));
-  checkBox.SetBool("selected", val);	
-	checkBox.AddEventListener('CLIK_click', listener);
-}
+  local CRZMutator_LoadoutPreset pres;
 
-static function OnCheckboxClick(GFxClikWidget.EventData ev)
-{
-  local CRZMutator_LoadoutPreset preset;
-  local bool value;
-  local string label;
-
-  preset = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
-  label = ev.target.GetString("label");
-  value = ev.target.GetBool("selected");
-  `Log(label $ "=" $ value);
+  pres = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
 
   switch(label)
   {
-    case "Infinite Ammo": preset.InfiniteAmmo = value; break;
-    case "Random Gun": preset.RandomWeapon = value; break;
-    case "Weapon Pickups": preset.AllowWeaponPickups = value; break;
-    case "Ravager": preset.Ravager = value; break;
-    case "Raven": preset.Raven = value; break;
-    case "Bullcraft": preset.Bullcraft = value; break;
-    case "Violator": preset.Violator = value; break;
-    case "Falcon": preset.Falcon = value; break;
-    case "Stingray": preset.Stingray = value; break;
-    case "Dragoneer": preset.Dragoneer = value; break;
-    case "Cerberus": preset.Cerberus = value; break;
-    case "Hellraiser": preset.Hellraiser = value; break;
+    case "Infinite Ammo": pres.InfiniteAmmo = value; break;
+    case "Random Gun": pres.RandomWeapon = value; break;
+    case "Weapon Pickups": pres.AllowWeaponPickups = value; break;
+    case "Ravager": pres.Ravager = value; break;
+    case "Raven": pres.Raven = value; break;
+    case "Bullcraft": pres.Bullcraft = value; break;
+    case "Violator": pres.Violator = value; break;
+    case "Falcon": pres.Falcon = value; break;
+    case "Stingray": pres.Stingray = value; break;
+    case "Dragoneer": pres.Dragoneer = value; break;
+    case "Cerberus": pres.Cerberus = value; break;
+    case "Hellraiser": pres.Hellraiser = value; break;
   }
 
-  preset.SaveConfig();
+  pres.SaveConfig();
 }
+
 
 
 defaultproperties

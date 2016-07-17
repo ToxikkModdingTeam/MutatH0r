@@ -87,109 +87,33 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_RegenDecay');
 
-  AddSlider(ConfigView, MutatorDataProvider, 0, 0.0, 10.0, 1.0, default.HealthRegenAmount, OnHealthRegenAmountChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 1, 0.0, 200.0, 5.0, default.HealthRegenLimit, OnHealthRegenLimitChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 2, 0.0, 10.0, 1.0, default.HealthDecayUpperAmount, OnHealthDecayUpperAmountChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 3, 0.0, 200.0, 5.0, default.HealthDecayUpperLimit, OnHealthDecayUpperLimitChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 4, 0.0, 10.0, 1.0, default.HealthDecayLowerAmount, OnHealthDecayLowerAmountChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 5, 0.0, 200.0, 5.0, default.HealthDecayLowerLimit, OnHealthDecayLowerLimitChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 6, 0.0, 10.0, 1.0, default.ArmorRegenAmount, OnArmorRegenAmountChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 7, 0.0, 200.0, 5.0, default.ArmorRegenLimit, OnArmorRegenLimitChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 8, 0.0, 10.0, 1.0, default.ArmorDecayAmount, OnArmorDecayAmountChanged);
-  AddSlider(ConfigView, MutatorDataProvider, 9, 0.0, 200.0, 5.0, default.ArmorDecayLimit, OnArmorDecayLimitChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Rate", "Health received per second from auto regeneration", 0.0, 10.0, 1.0, default.HealthRegenAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Limit", "Maximum health from auto regeneration", 0.0, 200.0, 5.0, default.HealthRegenLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #1", "Health lost per second when above limit #1", 0.0, 10.0, 1.0, default.HealthDecayUpperAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Limit #1", "Health above this value will be reduced by Rate #1", 0.0, 200.0, 5.0, default.HealthDecayUpperLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #2", "Health lost per second when above limit #2", 0.0, 10.0, 1.0, default.HealthDecayLowerAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Limit #2", "Health above this value will be reduced by Rate #2", 0.0, 200.0, 5.0, default.HealthDecayLowerLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Regen Rate", "Armor received per second from auto regeneration", 0.0, 10.0, 1.0, default.ArmorRegenAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Regen Limit", "Maximum armor from auto regeneration", 0.0, 200.0, 5.0, default.ArmorRegenLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Rate", "Armor lost per second when above Limit", 0.0, 10.0, 1.0, default.ArmorDecayAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Limit", "Armor above this value will be reduced at the given Rate", 0.0, 200.0, 5.0, default.ArmorDecayLimit, OnSliderChanged);
 }
 
-private static function AddSlider(GFxCRZFrontEnd_ModularView ConfigView, CRZUIDataProvider_Mutator MutatorDataProvider, int index, float min, float max, float snap, float val, delegate<GFxClikWidget.EventListener> listener)
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
-	local CRZSliderWidget Slider; 
-
-	Slider = ConfigView.AddSlider( ConfigView.ListObject1, "CRZSlider", MutatorDataProvider.ListOptions[index].OptionLabel, MutatorDataProvider.ListOptions[index].OptionDesc);
-  Slider.SetFloat("minimum", min);
-	Slider.SetFloat("maximum", max);
-	Slider.SetSnapInterval(snap);
-	//Slider.SetString("smallSnap","1"); // smallSnap overwrites the SnapInterval above
-  Slider.SetFloat("value", val);	
-	Slider.AddEventListener('CLIK_change', listener);
-}
-
-function static OnHealthRegenAmountChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthRegenAmount'))
-    return;
-	default.HealthRegenAmount = ev.target.GetFloat("value");
+  switch(label)
+  {
+    case "H. Regen Rate": default.HealthRegenAmount = value; break;
+    case "H. Regen Limit": default.HealthRegenLimit = value; break;
+    case "H. Decay Rate #1": default.HealthDecayUpperAmount = value; break;
+    case "H. Decay Limit #1": default.HealthDecayUpperLimit = value; break;
+    case "H. Decay Rate #2": default.HealthDecayLowerAmount = value; break;
+    case "H. Decay Limit #2": default.HealthDecayLowerLimit = value; break;
+    case "A. Regen Rate": default.ArmorRegenAmount = value; break;
+    case "A. Regen Limit": default.ArmorRegenLimit = value; break;
+    case "A. Decay Rate": default.ArmorDecayAmount = value; break;
+    case "A. Decay Limit": default.ArmorDecayLimit = value; break;
+  }
 	StaticSaveConfig();
 }
 
-function static OnHealthRegenLimitChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthRegenLimit'))
-    return;
-	default.HealthRegenLimit = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnHealthDecayUpperAmountChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthDecayUpperAmount'))
-    return;
-	default.HealthDecayUpperAmount = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnHealthDecayUpperLimitChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthDecayUpperLimit'))
-    return;
-	default.HealthDecayUpperLimit = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnHealthDecayLowerAmountChanged(GFxClikWidget.EventData ev)
-{ 
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthDecayLowerAmount'))
-    return;
-	default.HealthDecayLowerAmount = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnHealthDecayLowerLimitChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'HealthDecayLowerLimit'))
-    return;
-	default.HealthDecayLowerLimit = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-/******** Armor ************/
-
-function static OnArmorRegenAmountChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'ArmorRegenAmount'))
-    return;
-	default.ArmorRegenAmount = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnArmorRegenLimitChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'ArmorRegenLimit'))
-    return;
-	default.ArmorRegenLimit = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnArmorDecayAmountChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'ArmorDecayAmount'))
-    return;
-	default.ArmorDecayAmount = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnArmorDecayLimitChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_RegenDecay', 'ArmorDecayLimit'))
-    return;
-	default.ArmorDecayLimit = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}

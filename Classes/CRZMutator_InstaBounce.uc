@@ -24,18 +24,18 @@ simulated event PreBeginPlay()
 
 function PostBeginPlay()
 {
-	local UTGame Game;
+  local UTGame Game;
 
-	Super.PostBeginPlay();
+  Super.PostBeginPlay();
 
-	Game = UTGame(WorldInfo.Game);
+  Game = UTGame(WorldInfo.Game);
   Game.DefaultInventory.Length = 1;
-	Game.DefaultInventory[0] = class'CRZWeap_ScionRifle';
+  Game.DefaultInventory[0] = class'CRZWeap_ScionRifle';
 }
 
 function bool CheckReplacement(Actor Other)
 {
-	return !Other.IsA('PickupFactory');
+  return !Other.IsA('PickupFactory');
 }
 
 simulated function Tick(float DeltaTime)
@@ -64,56 +64,31 @@ simulated function Tick(float DeltaTime)
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-	super.PopulateConfigView(ConfigView, MutatorDataProvider);
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
 
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_InstaBounce');
 
-	AddSlider(ConfigView, MutatorDataProvider, 0, 0, 100, 1, default.KnockbackBall, OnKnockbackChanged);
-	AddSlider(ConfigView, MutatorDataProvider, 1, 0, 300, 5, default.SplashRadius, OnSplashRadiusChanged);
-	AddSlider(ConfigView, MutatorDataProvider, 2, 25, 200, 1, default.FireInterval, OnFireIntervalChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force of the splash blast [85]", 0, 100, 1, default.KnockbackBall, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius of the splash blast [150]", 0, 300, 5, default.SplashRadius, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Ball Fire Rate", "Time between firing two balls [500 millisec]", 250, 2000, 10, default.FireInterval * 10, OnSliderChanged);
 }
 
-private static function AddSlider(GFxCRZFrontEnd_ModularView ConfigView, CRZUIDataProvider_Mutator MutatorDataProvider, int index, float min, float max, float snap, float val, delegate<GFxClikWidget.EventListener> listener)
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
-	local CRZSliderWidget Slider; 
-
-	Slider = ConfigView.AddSlider( ConfigView.ListObject1, "CRZSlider", MutatorDataProvider.ListOptions[index].OptionLabel, MutatorDataProvider.ListOptions[index].OptionDesc);
-  Slider.SetFloat("minimum", min);
-	Slider.SetFloat("maximum", max);
-	Slider.SetSnapInterval(snap);
-  Slider.SetFloat("value", val);	
-	Slider.AddEventListener('CLIK_change', listener);
-}
-
-function static OnKnockbackChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'Knockback'))
-    return;
-	default.KnockbackBall = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnSplashRadiusChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'SplashRadius'))
-    return;
-	default.SplashRadius = ev.target.GetFloat("value");
-	StaticSaveConfig();
-}
-
-function static OnFireIntervalChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaBounce', 'FireInterval'))
-    return;
-	default.FireInterval = ev.target.GetFloat("value");
-	StaticSaveConfig();
+  switch(label)
+  {
+    case "Knockback": default.KnockbackBall = value; break;
+    case "Splash Radius": default.SplashRadius = value; break;
+    case "Ball Fire Rate": default.FireInterval = value / 10; break;
+  }
+  StaticSaveConfig();
 }
 
 defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
-	GroupNames[0]="WEAPONMOD"
-	GroupNames[1]="WEAPONRESPAWN"
+  GroupNames[0]="WEAPONMOD"
+  GroupNames[1]="WEAPONRESPAWN"
   GroupNames[2]="STINGRAY"
 }

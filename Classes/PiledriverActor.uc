@@ -41,7 +41,7 @@ simulated function bool Stomp(UTPawn injured, bool disableWeapon)
   {
     if (Stomped[i].pawn == injured)
     {
-      if (Stomped[i].time + 0.2 >= WorldInfo.TimeSeconds)
+      if (Stomped[i].time + 0.2 >= WorldInfo.TimeSeconds) // ignore immediate bounce-off double-stomps
         return false;
       break;
     }

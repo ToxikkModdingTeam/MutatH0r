@@ -53,40 +53,21 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-  local CRZSliderWidget slider; 
-
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_InstaTeamBoost');
 
-  slider = ConfigView.AddSlider(ConfigView.ListObject1, "CRZSlider", "Pull/Push force", "pull (-) or push (+) your team mates with a hit");
-  slider.SetFloat("minimum", -350.0);
-  slider.SetFloat("maximum", +350.0);
-  slider.SetFloat("smallSnap", 10);
-  slider.SetInt("value", int(default.HitMomentum / 1000));
-  slider.AddEventListener('CLIK_change', OnKnockbackChanged);
-
-  slider = ConfigView.AddSlider(ConfigView.ListObject1, "CRZSlider", "Team Damage", "Damage dealt when hitting your team mates");
-  slider.SetFloat("minimum", 0.0);
-  slider.SetFloat("maximum", 100.0);
-  slider.SetFloat("smallSnap", 5);
-  slider.SetInt("value", default.TeamDamage);
-  slider.AddEventListener('CLIK_change', OnTeamDamageChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Pull/Push force", "pull (-) or push (+) your team mates with a hit", -350, 350, 10, int (default.HitMomentum/1000), OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Team Damage", "Damage dealt when hitting your team mates", 0, 100, 5, default.TeamDamage, OnSliderChanged);
 }
 
-function static OnKnockbackChanged(GFxClikWidget.EventData ev)
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaTeamBoost', 'HitMomentum'))
-    return;
-  default.HitMomentum = ev.target.GetFloat("value") * 1000;
-  StaticSaveConfig();
-}
-
-function static OnTeamDamageChanged(GFxClikWidget.EventData ev)
-{
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_InstaTeamBoost', 'TeamDamage'))
-    return;
-  default.TeamDamage = ev.target.GetInt("value");
+  switch(label)
+  {
+    case "Pull/Push force": default.HitMomentum = value * 1000; break;
+    case "Team Damage": default.TeamDamage = value; break;
+  }
   StaticSaveConfig();
 }
 

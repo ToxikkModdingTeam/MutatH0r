@@ -102,20 +102,15 @@ function LogSummary()
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-  local GfxClikWidget checkBox;
-
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_TickRate');
- 
-  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", "Show Server FPS", "Show server-side FPS to detect server lags"));
-  checkBox.SetBool("selected", !class'TickRateInteraction'.default.Disabled);	
-  checkBox.AddEventListener('CLIK_click', OnCheckboxClick);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Show Server FPS", "Show server-side FPS to detect server lags", !class'TickRateInteraction'.default.Disabled, OnCheckboxClick);
 }
 
-static function OnCheckboxClick(GFxClikWidget.EventData ev)
+static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
 {
-  class'TickRateInteraction'.default.Disabled = !ev.target.GetBool("selected");
+  class'TickRateInteraction'.default.Disabled = !value;
   class'TickRateInteraction'.static.StaticSaveConfig();
 }
 

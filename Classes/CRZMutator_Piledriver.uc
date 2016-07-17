@@ -6,8 +6,9 @@ struct ClientActor
   var PiledriverActor actor;
 };
 
-var config int StompDamage;
-var config bool DisableWeapon;
+var config int StompDamage;  // damage dealt when landing on a player's head
+var config bool DisableWeapon;  // a player stomped in the ground can't fire his weapon
+var config bool ImmediateDamage; // deal damage on every head-landing, not only when fully stomped
 var array<ClientActor> clientActors;
 
 function InitMutator(string options, out string error)
@@ -79,35 +80,21 @@ function NetDamage(int originalDamage, out int damage, Pawn injured, Controller 
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-  local GfxClikWidget checkBox;
-  local CRZSliderWidget slider; 
-
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Piledriver');
- 
-  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", "Disable Weapon", "Disable a player's weapon when stomped in the ground"));
-  checkBox.SetBool("selected", default.DisableWeapon);	
-  checkBox.AddEventListener('CLIK_click', OnDisableWeaponClick);
-
-  slider = ConfigView.AddSlider(ConfigView.ListObject1, "CRZSlider", "Stomp Damage", "Damage dealt when jumping on a stomped player's head");
-  slider.SetFloat("minimum", 0.0);
-  slider.SetFloat("maximum", 400.0);
-  slider.SetFloat("smallSnap", 10);
-  slider.SetInt("value", default.StompDamage);
-  slider.AddEventListener('CLIK_change', OnStompDamageChanged);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Disable Weapon", "Disable a player's weapon when stomped in the ground", default.DisableWeapon, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Stomp Damage", "Damage dealt when landing on a stomped player's head", 0, 400, 10, default.StompDamage, OnSliderChanged);
 }
 
-static function OnDisableWeaponClick(GFxClikWidget.EventData ev)
+static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
 {
-  default.DisableWeapon = ev.target.GetBool("selected");
+  default.DisableWeapon = value;
   StaticSaveConfig();
 }
 
-function static OnStompDamageChanged(GFxClikWidget.EventData ev)
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
-  if (class'MutConfigHelper'.static.IgnoreChange(class'CRZMutator_Piledriver', 'StompDamage'))
-    return;
-  default.StompDamage = ev.target.GetInt("value");
+  default.StompDamage = value;
   StaticSaveConfig();
 }

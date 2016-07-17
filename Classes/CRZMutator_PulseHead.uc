@@ -6,7 +6,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_PulseHead extends UTMutator config(MutatH0r);
+class CRZMutator_PulseHead extends CRZMutator config(MutatH0r);
 
 const BaseTransOff = 13.25;         // 14.0 - 0.75
 const CorrCylinderHeight = 48.25;   // 49.0 - 0.75
