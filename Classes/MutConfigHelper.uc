@@ -69,8 +69,7 @@ public static function CRZSliderWidget AddSlider(GFxCRZFrontEnd_ModularView Conf
   Slider.SetFloat("minimum", min);
   Slider.SetFloat("maximum", max);
   Slider.SetSnapInterval(snap);
-  if (val >= min && val <= max)
-    Slider.SetFloat("value", val);	
+  Slider.SetFloat("value", FClamp(val, min, max));	
   Slider.AddEventListener('CLIK_change', OnSliderChanged);
   
   helper = GetHelper();

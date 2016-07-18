@@ -4,7 +4,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_Roq3t extends UTMutator config (MutatH0r);
+class CRZMutator_Roq3t extends CRZMutator config (MutatH0r);
 
 const OPT_DrawDamageRadius = "?DrawDamageRadius=";
 const OPT_Preset = "?Roq3tPreset=";
@@ -35,7 +35,9 @@ function InitMutator(string options, out string error)
   super.InitMutator(options, error);
 
   ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
-  DrawDamageRadius = bool(class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius));
+  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+  if (val != "")
+    DrawDamageRadius = bool(val);
 
   val = class 'Utils'.static.GetOption(options, OPT_Mutate);
   AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
@@ -84,6 +86,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   
   Momentum.X = Momentum.X * kbFactor;
   Momentum.Y = Momentum.Y * kbFactor;
+  `Log("Momentum.Z=" $ Momentum.Z);
   Momentum.Z = FClamp(Momentum.Z * kbFactor, MinKnockbackVert, MaxKnockbackVert);	
 }
 
@@ -250,6 +253,58 @@ function ShowInfo(PlayerController pc)
   pc.ClientMessage("_____ Roq3t settings _____");
 }
 
+
+static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
+{
+  local Roq3tConfig preset;
+
+  super.PopulateConfigView(ConfigView, MutatorDataProvider);
+  preset = new(none, "Preset1") class'Roq3tConfig';
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Roq3t');
+
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force pushing players away from point of impact [80]", 0, 200, 1, preset.Knockback / 1000, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "KB Factor Self", "Knockback factor when rocket-jumping [100%]", 0, 200, 1, preset.KnockbackFactorSelf * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "KB Factor Others", "Knockback factor when hitting other players [100%]", 0, 200, 1, preset.KnockbackFactorOthers * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Min Vertical KB", "Minimum vertical knockback [0]", 0, 1000, 10, preset.MinKnockbackVert, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Max Vertical KB", "Maximum vertical knockback [1000]", 0, 2000, 10, preset.MaxKnockbackVert, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate", "Time between firing 2 rockets [1000 millisec]", 500, 2000, 10, preset.FireInterval * 1000, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Direct Damage %", "Factor to adjust damage of a direct hit [100]", 0, 200, 1, preset.DamageFactorDirect * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Damage %", "Factor to adjust splash damage hits [100]", 0, 200, 1, preset.DamageFactorSplash * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [220]", 0, 300, 10, preset.DamageRadius, OnSliderChanged);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Draw Splash Rad.", "Draw a circle indicating the splash damage area", preset.DrawDamageRadius, OnCheckboxClick);
+}
+
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
+{
+  local Roq3tConfig preset;
+
+  preset = new(none, "Preset1") class'Roq3tConfig';
+
+  switch(label)
+  {
+    case "Knockback": preset.Knockback = value * 1000; break;
+    case "KB Factor Self": preset.KnockbackFactorSelf = value/100; break;
+    case "KB Factor Others": preset.KnockbackFactorOthers = value/100; break;
+    case "Min Vertical KB": preset.MinKnockbackVert = value; break;
+    case "Max Vertical KB": preset.MaxKnockbackVert = value; break;
+    case "Fire Rate": preset.FireInterval = value / 1000; break;
+    case "Direct Damage %": preset.DamageFactorDirect = value / 100; break;
+    case "Splash Damage %": preset.DamageFactorSplash = value / 100; break;
+    case "Self Damage %": preset.DamageFactorSelf = value/100; break;
+    case "Splash Radius": preset.DamageRadius = value; break;
+  }
+
+  preset.SaveConfig();
+}
+
+static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
+{
+  local Roq3tConfig preset;
+  preset = new(none, "Preset1") class'Roq3tConfig';
+  preset.DrawDamageRadius = value;
+  preset.SaveConfig();
+}
 
 defaultproperties
 {

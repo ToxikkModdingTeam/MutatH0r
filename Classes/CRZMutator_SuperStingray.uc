@@ -366,44 +366,23 @@ function ShowInfo(PlayerController pc)
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
   local SuperStingrayConfig preset;
-  local GfxClikWidget checkBox;
 
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
-
+  preset = new(none, "Preset1") class'SuperStingrayConfig';
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_SuperStingray');
 
-  preset = new(none, "Preset1") class'SuperStingrayConfig';
-
-  AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [17]", 0, 100, 1, preset.DamagePlasma);
-  AddSlider(ConfigView, "Damage Beam", "Damage dealt by a beam hit [45]", 0, 100, 1, preset.DamageBeam);
-  AddSlider(ConfigView, "Damage Combo", "Extra damage per ball when following up with a beam [8]", 0, 100, 1, preset.DamageCombo);
-  AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [167 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000);
-  AddSlider(ConfigView, "Fire Rate Beam", "Time between firing 2 beams [770 millisec]", 0, 2000, 10, preset.FireIntervalBeam * 1000);
-  AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [200]", 0, 350, 10, preset.KnockbackPlasma / 100);
-  AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", 0, 350, 10, preset.KnockbackBeam);
-  AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [50]", 0, 200, 5, preset.LevitationSelf);
-  AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [100]", 0, 200, 5, preset.LevitationOthers);
-  AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100);
-  AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [120]", 0, 200, 10, preset.DamageRadius);
-
-  checkBox = GfxClikWidget(ConfigView.AddItem( ConfigView.ListObject1, "CheckBox", "Draw Splash Rad.", "Draw a circle indicating the splash damage area"));
-  checkBox.SetBool("selected", preset.DrawDamageRadius);	
-  checkBox.AddEventListener('CLIK_click', static.OnCheckboxClick);
-}
-
-private static function AddSlider(GFxCRZFrontEnd_ModularView ConfigView, string label, string descr, float min, float max, float snap, float val)
-{
-/*
-  local CRZSliderWidget Slider; 
-
-  Slider = ConfigView.AddSlider( ConfigView.ListObject1, "CRZSlider", label, descr);
-  Slider.SetFloat("minimum", min);
-  Slider.SetFloat("maximum", max);
-  Slider.SetSnapInterval(snap);
-  Slider.SetFloat("value", val);	
-  Slider.AddEventListener('CLIK_change', OnSliderChanged);
-  */
-  class'MutConfigHelper'.static.AddSlider(ConfigView, label, descr, min, max, snap, val, static.OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [17]", 0, 100, 1, preset.DamagePlasma, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Beam", "Damage dealt by a beam hit [45]", 0, 100, 1, preset.DamageBeam, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Combo", "Extra damage per ball when following up with a beam [8]", 0, 100, 1, preset.DamageCombo, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [167 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Beam", "Time between firing 2 beams [770 millisec]", 0, 2000, 10, preset.FireIntervalBeam * 1000, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [200]", 0, 350, 10, preset.KnockbackPlasma / 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", 0, 350, 10, preset.KnockbackBeam, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [50]", 0, 200, 5, preset.LevitationSelf, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [100]", 0, 200, 5, preset.LevitationOthers, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [120]", 0, 200, 10, preset.DamageRadius, OnSliderChanged);
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Draw Splash Rad.", "Draw a circle indicating the splash damage area", preset.DrawDamageRadius, OnCheckboxClick);
 }
 
 function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
@@ -411,8 +390,6 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
   local SuperStingrayConfig preset;
 
   preset = new(none, "Preset1") class'SuperStingrayConfig';
-
-  `Log("changing " $ label $ " to " $value);
 
   switch(label)
   {
@@ -432,21 +409,11 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
   preset.SaveConfig();
 }
 
-static function OnCheckboxClick(GFxClikWidget.EventData ev)
+static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
 {
   local SuperStingrayConfig preset;
-  local string label;
-  local bool value;
-
   preset = new(none, "Preset1") class'SuperStingrayConfig';
-  label = ev.target.GetString("label");
-  value = ev.target.GetBool("selected");
-
-  switch(label)
-  {
-    case "Draw Splash Rad.": preset.DrawDamageRadius = value; break;
-  }
-
+  preset.DrawDamageRadius = value;
   preset.SaveConfig();
 }
 
