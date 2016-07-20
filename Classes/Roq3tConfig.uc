@@ -1,5 +1,6 @@
 class Roq3tConfig extends Object config(MutatH0r) perobjectconfig;
 
+var config float Speed;
 var config float Knockback;
 var config float KnockbackFactorOthers;
 var config float KnockbackFactorSelf;
@@ -14,6 +15,8 @@ var config bool DrawDamageRadius;
 
 function SetDefaults()
 {
+  if (Speed == 0)
+    Speed = class'CRZProj_RocketLauncher'.default.Speed;
   if (Knockback == 0)
     Knockback = 80000.0;
   if (KnockbackFactorOthers == 0)

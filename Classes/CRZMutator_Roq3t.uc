@@ -12,6 +12,7 @@ const OPT_Mutate = "?Roq3tMutate=";
 
 var float Knockback, KnockbackFactorOthers, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var float DamageFactorSelf, DamageRadius;
+var float Speed;
 var bool DrawDamageRadius;
 var bool AllowMutate;
 
@@ -52,6 +53,7 @@ function ApplyPreset(string presetName)
   preset = new(none, presetName) class'Roq3tConfig';
   preset.SetDefaults();
 
+  Speed = preset.Speed;
   Knockback = preset.Knockback;
   KnockbackFactorSelf = preset.KnockbackFactorSelf;
   KnockbackFactorOthers = preset.KnockbackFactorOthers;
@@ -65,6 +67,15 @@ function ApplyPreset(string presetName)
   DrawDamageRadius = preset.DrawDamageRadius;
 }
 
+//function bool CheckReplacement(Actor other)
+//{
+//  if (other.class == class'CRZWeap_RocketLauncher')
+//  {
+//    spawn(class'H0Weap_RocketLauncher');
+//    return false;
+//  }
+//  return super.CheckReplacement(other);
+//}
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
@@ -94,7 +105,7 @@ simulated event Tick(float DeltaTime)
 {	
   local UTPawn P;
   local PlayerController PC;
-  local Projectile proj;
+  local CRZProj_RocketLauncher proj; 
   local vector v;
   
   Super.Tick(Deltatime);
@@ -111,15 +122,19 @@ simulated event Tick(float DeltaTime)
       TweakCerberus(PC.Pawn);
   }
 
+
   // modify rocket projectiles
-  foreach WorldInfo.DynamicActors(class'Projectile', proj)
+  foreach WorldInfo.DynamicActors(class'CRZProj_RocketLauncher', proj)
   {
-    if (string(proj.Class) == "CRZProj_Rocket")
+    if (abs(vsizesq(proj.Velocity) - proj.Speed * proj.Speed) < 10) // initial value
     {
-      proj.Damage = 100 * DamageFactorDirect;
-      proj.DamageRadius = DamageRadius;
-      proj.MomentumTransfer = Knockback;
+      proj.Velocity = normal(proj.Velocity) * Speed; // override velocity
+      proj.MaxSpeed = Speed;
+      `Log("changed rocket speed to " $ speed);
     }
+    proj.Damage = 100 * DamageFactorDirect;
+    proj.DamageRadius = DamageRadius;
+    proj.MomentumTransfer = Knockback;
   }
 
   // draw splash radius
@@ -194,6 +209,8 @@ function Mutate(string MutateString, PlayerController sender)
 
   if (cmd == "preset")
     ApplyPreset("preset" $ arg);
+  else if (cmd ~= "RocketSpeed")
+    Speed = float(arg);
   else if (cmd ~= "KnockbackFactorOthers")
     KnockbackFactorOthers = float(arg);
   else if (cmd ~= "KnockbackFactorSelf")
@@ -249,7 +266,7 @@ function ShowInfo(PlayerController pc)
   pc.ClientMessage("MinKnockbackVert=" $ MinKnockbackVert $ ", MaxKnockbackVert=" $ MaxKnockbackVert, 'Info');
   pc.ClientMessage("Knockback=" $ Knockback $ ", KnockbackFactorOthers=" $ KnockbackFactorOthers $ ", KnockbackFactorSelf=" $ KnockbackFactorSelf, 'Info');
   pc.ClientMessage("DamageFactorDirect=" $ DamageFactorDirect $ ", DamageFactorSplash=" $ DamageFactorSplash $ ", DamageFactorSelf=" $ DamageFactorSelf, 'Info');
-  pc.ClientMessage("FireInterval=" $ FireInterval $ ", DamageRadius=" $ DamageRadius, 'Info');
+  pc.ClientMessage("FireInterval=" $ FireInterval $ ", DamageRadius=" $ DamageRadius $ ", RocketSpeed=" $ Speed, 'Info');
   pc.ClientMessage("_____ Roq3t settings _____");
 }
 
@@ -262,6 +279,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   preset = new(none, "Preset1") class'Roq3tConfig';
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Roq3t');
 
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Rocket Speed", "Speed of the rocket projectile [1800]", 500, 7500, 50, preset.Speed, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force pushing players away from point of impact [80]", 0, 200, 1, preset.Knockback / 1000, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "KB Factor Self", "Knockback factor when rocket-jumping [100%]", 0, 200, 1, preset.KnockbackFactorSelf * 100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "KB Factor Others", "Knockback factor when hitting other players [100%]", 0, 200, 1, preset.KnockbackFactorOthers * 100, OnSliderChanged);
@@ -283,6 +301,7 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
 
   switch(label)
   {
+    case "Rocket Speed": preset.Speed = value; break;
     case "Knockback": preset.Knockback = value * 1000; break;
     case "KB Factor Self": preset.KnockbackFactorSelf = value/100; break;
     case "KB Factor Others": preset.KnockbackFactorOthers = value/100; break;
