@@ -19,7 +19,7 @@ var bool AllowMutate;
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius, AllowMutate;
+    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius, AllowMutate, Speed;
 }
 
 simulated event PostBeginPlay()
@@ -67,16 +67,6 @@ function ApplyPreset(string presetName)
   DrawDamageRadius = preset.DrawDamageRadius;
 }
 
-//function bool CheckReplacement(Actor other)
-//{
-//  if (other.class == class'CRZWeap_RocketLauncher')
-//  {
-//    spawn(class'H0Weap_RocketLauncher');
-//    return false;
-//  }
-//  return super.CheckReplacement(other);
-//}
-
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
   local float kbFactor;
@@ -97,7 +87,6 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
   
   Momentum.X = Momentum.X * kbFactor;
   Momentum.Y = Momentum.Y * kbFactor;
-  `Log("Momentum.Z=" $ Momentum.Z);
   Momentum.Z = FClamp(Momentum.Z * kbFactor, MinKnockbackVert, MaxKnockbackVert);	
 }
 
@@ -130,7 +119,6 @@ simulated event Tick(float DeltaTime)
     {
       proj.Velocity = normal(proj.Velocity) * Speed; // override velocity
       proj.MaxSpeed = Speed;
-      `Log("changed rocket speed to " $ speed);
     }
     proj.Damage = 100 * DamageFactorDirect;
     proj.DamageRadius = DamageRadius;
