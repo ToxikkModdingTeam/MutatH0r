@@ -35,7 +35,7 @@ function InitMutator(string options, out string error)
   ServerWelcomeHeader = WelcomeHeader;
   SetServerWelcomeMessage(lines, WelcomeMessage);
 
-  presetName = class 'Utils'.static.GetOption(options, "motd");
+  presetName = class'GameInfo'.static.ParseOption(options, "motd");
   if (presetName != "")
     preset = new(none, presetName) class'MotdConfig';
  

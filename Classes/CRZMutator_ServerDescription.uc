@@ -10,7 +10,7 @@ class CRZMutator_ServerDescription extends UTMutator config (MutatH0r);
 
 `include(UTGame\Classes\UTOnlineConstants.uci)
 
-const OPT_ServerDescription = "?ServerDescription=";
+const OPT_ServerDescription = "ServerDescription";
 var string _options;
 
 function InitMutator(string options, out string error)
@@ -24,23 +24,14 @@ function InitMutator(string options, out string error)
 
 function SetServerName()
 {
-  local int idx;
   local string serverDescription;
   local OnlineGameInterface gameInterface;
   local OnlineGameSettings gameSettings;
 
-  idx = instr(_options, OPT_ServerDescription, false, true);
-  if (idx < 0)
+  serverDescription = class'GameInfo'.static.ParseOption(_options, OPT_ServerDescription);
+  if (serverDescription == "")
     return;
-  
-  serverDescription = mid(_options, idx + len(OPT_ServerDescription));
-  idx = instr(serverDescription, "?");
-  if (idx >= 0)
-    serverDescription = left(serverDescription, idx);
-
-  if (len(serverDescription) == 0)
-    return;
-  
+    
   gameInterface = self.WorldInfo.Game.GameInterface;
   if (gameInterface == None)
     return;

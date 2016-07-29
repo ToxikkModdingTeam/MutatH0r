@@ -6,9 +6,9 @@
 
 class CRZMutator_Roq3t extends CRZMutator config (MutatH0r);
 
-const OPT_DrawDamageRadius = "?DrawDamageRadius=";
-const OPT_Preset = "?Roq3tPreset=";
-const OPT_Mutate = "?Roq3tMutate=";
+const OPT_DrawDamageRadius = "DrawDamageRadius";
+const OPT_Preset = "Roq3tPreset";
+const OPT_Mutate = "Roq3tMutate";
 
 var float Knockback, KnockbackFactorOthers, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var float DamageFactorSelf, DamageRadius;
@@ -35,12 +35,12 @@ function InitMutator(string options, out string error)
 
   super.InitMutator(options, error);
 
-  ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
-  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+  ApplyPreset(class'GameInfo'.static.ParseOption(options, OPT_Preset));
+  val = class'GameInfo'.static.ParseOption(options, OPT_DrawDamageRadius);
   if (val != "")
     DrawDamageRadius = bool(val);
 
-  val = class 'Utils'.static.GetOption(options, OPT_Mutate);
+  val = class'GameInfo'.static.ParseOption(options, OPT_Mutate);
   AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
 }
 

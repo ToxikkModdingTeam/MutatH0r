@@ -1,6 +1,7 @@
 // MutatH0r.CRZMutator_SuperStingray
 // ----------------
-// Less damage per plasma ball, but splash damage and levitation effect
+// Dynamically configurable weapon, which allows changing weapon and projectile settings on the fly
+// 
 // ----------------
 // by PredatH0r
 //================================================================
@@ -14,9 +15,9 @@ struct TaggedPawnInfo
   var float ComboExtraDamage;
 };
 
-const OPT_DrawDamageRadius = "?DrawDamageRadius=";
-const OPT_Preset = "?SuperRayPreset=";
-const OPT_Mutate = "?SuperRayMutate=";
+const OPT_DrawDamageRadius = "DrawDamageRadius";
+const OPT_Preset = "SuperRayPreset";
+const OPT_Mutate = "SuperRayMutate";
 
 var float DamagePlasma, DamageBeam, DamageCombo;
 var float KnockbackPlasma, KnockbackBeam, DamageRadius;
@@ -27,6 +28,14 @@ var bool receivedWelcomeMessage;
 var LinearColor TagColor;
 var bool DrawDamageRadius;
 var bool AllowMutate;
+var int ShotCostPlasma, ShotCostBeam;
+var bool SwapButtons;
+
+var repnotify byte SettingsChanged;
+
+
+var bool bConfigWidgets;
+var bool bAllowDisableTick;
 
 // server only
 var array<TaggedPawnInfo> TaggedPawns;
@@ -35,14 +44,14 @@ var array<TaggedPawnInfo> TaggedPawns;
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DrawDamageRadius, AllowMutate;
+    DamagePlasma, DamageRadius, KnockbackPlasma, FireIntervalPlasma, FireIntervalBeam, DamageBeam, DrawDamageRadius, AllowMutate, ShotCostPlasma, ShotCostBeam, SwapButtons,
+      SettingsChanged;
 }
 
 simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
-  Enable('Tick');
 
   if (Role == ROLE_Authority)
     SetTimer(1.0, true, 'CleanupTaggedPawns');
@@ -55,15 +64,16 @@ function InitMutator(string options, out string error)
 
   super.InitMutator(options, error);
 
-  ApplyPreset(class 'Utils'.static.GetOption(options, OPT_Preset));
-  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+  ApplyPresetName(class'GameInfo'.static.ParseOption(options, OPT_Preset));
+  val = class'GameInfo'.static.ParseOption(options, OPT_DrawDamageRadius);
   if (val != "")
     DrawDamageRadius = bool(val);
-  val = class 'Utils'.static.GetOption(options, OPT_DrawDamageRadius);
+
+  val = class'GameInfo'.static.ParseOption(options, OPT_Mutate);
   AllowMutate = val != "" ? bool(val) : (WorldInfo.NetMode == NM_Standalone);
 }
 
-function ApplyPreset(string presetName)
+function ApplyPresetName(string presetName)
 {
   local SuperStingrayConfig preset;
 
@@ -71,7 +81,11 @@ function ApplyPreset(string presetName)
     presetName = "Preset1";
   preset = new(none, presetName) class'SuperStingrayConfig';
   preset.SetDefaults();
+  ApplyPreset(preset);
+}
 
+function ApplyPreset(SuperStingrayConfig preset)
+{
   DamagePlasma = preset.DamagePlasma;
   DamageBeam = preset.DamageBeam;
   DamageCombo = preset.DamageCombo;
@@ -87,6 +101,32 @@ function ApplyPreset(string presetName)
   FireIntervalBeam = preset.FireIntervalBeam;
   TagColor = preset.TagColor;
   TagDuration = preset.TagDuration;
+  SwapButtons = preset.SwapButtons;
+  ShotCostPlasma = preset.ShotCost[0];
+  ShotCostBeam = preset.ShotCost[1];
+
+  ApplySettings();
+  ++SettingsChanged;
+}
+
+function bool CheckReplacement(Actor other)
+{
+  local CRZWeap_ScionRifle w;
+  local H0Weap_ScionRifle r;
+  w = CRZWeap_ScionRifle(other);
+  r = H0Weap_ScionRifle(other);
+
+  if (w != none && r == none)
+  {
+    ReplaceWith(other, "MutatH0r.H0Weap_ScionRifle");
+    //return false;
+  }
+  if (CRZWeaponPickupFactory(other) != none && CRZWeaponPickupFactory(other).WeaponPickupClass == class'Cruzade.CRZWeap_ScionRifle')
+  {
+    CRZWeaponPickupFactory(other).WeaponPickupClass = class'MutatH0r.H0Weap_ScionRifle';
+    CRZWeaponPickupFactory(other).InventoryType = class'MutatH0r.H0Weap_ScionRifle';
+  }
+  return true;
 }
 
 function CleanupTaggedPawns()
@@ -106,36 +146,11 @@ function CleanupTaggedPawns()
 
 simulated function Tick(float DeltaTime)
 {
-  local PlayerController pc;
   local UTPawn p;
-  local Projectile proj;
   local Vector v;
 
-  // modify fire interval
-  if (Role == ROLE_Authority)
-  {
-    foreach WorldInfo.AllPawns(class'UTPawn', p)
-      TweakStingray(p);
-  }
-  else
-  {
-    foreach WorldInfo.LocalPlayerControllers(class'PlayerController', pc)
-      TweakStingray(pc.Pawn);
-  }
-
-  // tweak plasma balls
-  foreach WorldInfo.DynamicActors(class'Projectile', proj)
-  {
-    if (instr(string(proj.Class), "CRZProj_ScionRifle") == 0 && proj.Damage != DamagePlasma)
-    {
-      proj.Damage = DamagePlasma;
-      proj.DamageRadius = DamageRadius;
-      proj.MomentumTransfer = KnockbackPlasma;
-    }
-  }
-
   // draw splash radius
-  if (DrawDamageRadius && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone))
+  if (DrawDamageRadius && WorldInfo.NetMode != NM_DedicatedServer)
   {
     foreach WorldInfo.DynamicActors(class'UTPawn', P)
     {
@@ -146,21 +161,21 @@ simulated function Tick(float DeltaTime)
 }
 
 
-simulated function TweakStingray(Pawn P)
+simulated function ApplySettings()
 {
-  local UTWeapon W;
- 
-  if (P == None)
-    return;
-  W = UTWeapon(P.Weapon);
-  if (W != none && string(W.Class) == "CRZWeap_ScionRifle")
-  {
-    W.InstantHitDamage[1] = DamageBeam;
-    W.FireInterval[0] = FireIntervalPlasma;
-    W.FireInterval[1] = FireIntervalBeam;
-  }               
-}
+  local H0Weap_ScionRifle w;
+  local H0Proj_ScionRifle p;
 
+  foreach WorldInfo.DynamicActors(class'H0Weap_ScionRifle', w)
+    w.ApplySettings();
+  foreach WorldInfo.DynamicActors(class'H0Proj_ScionRifle', p)
+    p.ApplySettings();
+
+  if (DrawDamageRadius && WorldInfo.NetMode != NM_DedicatedServer)
+    Enable('Tick');
+  else if (bAllowDisableTick)
+    Disable('Tick');
+}
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
@@ -219,8 +234,6 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     // add knockback
     if (string(DamageType) == "CRZDmgType_Scion_Plasma")
       Momentum.Z += isSelfDamage ? LevitationSelf : LevitationOthers;
-    else if (KnockbackBeam != 0 && InstigatedBy != none)
-      Momentum += normal(Injured.Location - InstigatedBy.Pawn.Location) * KnockbackBeam;
   }
 }
 
@@ -291,7 +304,7 @@ function Mutate(string MutateString, PlayerController Sender)
   }
 
   if (cmd == "preset")
-    ApplyPreset("preset" $ arg);
+    ApplyPresetName("preset" $ arg);
   else if (cmd ~= "DamagePlasma")
     DamagePlasma = float(arg);
   else if (cmd ~= "DamageRadius")
@@ -328,6 +341,9 @@ function Mutate(string MutateString, PlayerController Sender)
 
   `log("SuperStingray mutated:" @ cmd @ arg);
 
+  ApplySettings();
+  ++SettingsChanged;
+
   if (sender == none)
     return;
 
@@ -362,22 +378,33 @@ function ShowInfo(PlayerController pc)
   pc.ClientMessage("_____ SuperStingray settings _____");
 }
 
+simulated event ReplicatedEvent(name varName)
+{
+  if (varName == 'SettingsChanged')
+    ApplySettings();
+}
+
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
   local SuperStingrayConfig preset;
 
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
+
+  if (!default.bConfigWidgets)
+    return;
+
   preset = new(none, "Preset1") class'SuperStingrayConfig';
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_SuperStingray');
 
+  class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Swap Buttons", "Swap primary and secondary fire", preset.SwapButtons, OnCheckboxClick);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [17]", 0, 100, 1, preset.DamagePlasma, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Beam", "Damage dealt by a beam hit [45]", 0, 100, 1, preset.DamageBeam, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Combo", "Extra damage per ball when following up with a beam [8]", 0, 100, 1, preset.DamageCombo, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [167 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Beam", "Time between firing 2 beams [770 millisec]", 0, 2000, 10, preset.FireIntervalBeam * 1000, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [200]", 0, 350, 10, preset.KnockbackPlasma / 100, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", 0, 350, 10, preset.KnockbackBeam, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", 0, 350, 10, preset.KnockbackBeam / 100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [50]", 0, 200, 5, preset.LevitationSelf, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [100]", 0, 200, 5, preset.LevitationOthers, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100, OnSliderChanged);
@@ -399,7 +426,7 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
     case "Fire Rate Ball": preset.FireIntervalPlasma = value / 1000; break;
     case "Fire Rate Beam": preset.FireIntervalBeam = value / 1000; break;
     case "Knockback Ball": preset.KnockbackPlasma = value * 100; break;
-    case "Knockback Beam": preset.KnockbackBeam = value; break;
+    case "Knockback Beam": preset.KnockbackBeam = value * 100; break;
     case "Lift yourself": preset.LevitationSelf = value; break;
     case "Lift others": preset.LevitationOthers = value; break;
     case "Splash Radius": preset.DamageRadius = value; break;
@@ -413,7 +440,10 @@ static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventDat
 {
   local SuperStingrayConfig preset;
   preset = new(none, "Preset1") class'SuperStingrayConfig';
-  preset.DrawDamageRadius = value;
+  if (label == "Swap Buttons") 
+    preset.SwapButtons = value;
+  else if (label == "Draw Splash Rad.") 
+    preset.DrawDamageRadius = value;
   preset.SaveConfig();
 }
 
@@ -422,6 +452,9 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
+ 
+  bConfigWidgets=true
+  bAllowDisableTick=true
 
   //TagDuration=1.0
   TagColor=(A=255.0, R=0.0, G=128.0, B=0.0)

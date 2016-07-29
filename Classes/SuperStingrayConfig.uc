@@ -1,6 +1,6 @@
 class SuperStingrayConfig extends Object config(MutatH0r) perobjectconfig;
 
-
+var config bool SwapButtons;
 var config float DamagePlasma, DamageBeam, DamageCombo;
 var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var config float TagDuration;
@@ -8,6 +8,7 @@ var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, Levitatio
 var config float FireIntervalPlasma, FireIntervalBeam;
 var config LinearColor TagColor;
 var config bool DrawDamageRadius;
+var config array<int> ShotCost;
 
 function SetDefaults()
 {
@@ -33,4 +34,9 @@ function SetDefaults()
     TagColor.G = 128.0;
     TagColor.B = 0.0;
   }
+
+  if (ShotCost.length < 1)
+    ShotCost.AddItem(class'CRZWeap_ScionRifle'.default.ShotCost[0]);
+  if (ShotCost.length < 2)
+    ShotCost.AddItem(class'CRZWeap_ScionRifle'.default.ShotCost[1]);
 }

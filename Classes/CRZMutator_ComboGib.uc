@@ -7,36 +7,48 @@
 // by PredatH0r
 //================================================================
  
-class CRZMutator_ComboGib extends UTMutator config (MutatH0r);
- 
-const BallDirectHitDamage = 17;
+class CRZMutator_ComboGib extends CRZMutator_SuperStingray config (MutatH0r);
+
+const BallDirectHitDamage = 17; // a random magic number
 
 var config float VolunerabilityDuration;
-var config int BallArmor; // number of ball hits needed to get volunerable to the beam
+var config int PlasmaArmor; // number of ball hits needed to get volunerable to the beam
 var config bool TeamMateTag, TeamMateKill, TeamMateUntag;
 var config float GravityZ;
 
-var float BallFireRate, BeamFireRate, ExtraUpSelf;
-var float BallKnockbackVert, BeamKnockbackVert;
+var float ExtraUpSelf;
+var float PlasmaKnockbackVert, BeamKnockbackVert;
 
 var LinearColor VolunerabilityColorBeam;
 var LinearColor VolunerabilityColorBall;
  
-replication
-{
-  if ( (bNetInitial || bNetDirty) && Role == ROLE_Authority )
-    BallFireRate, BeamFireRate;
-}
  
 function InitMutator(string Options, out string ErrorMessage)
 {
+  local SuperStingrayConfig preset;
+
   Super.InitMutator(Options, ErrorMessage);
+
   if (GravityZ != 0)
-	  WorldInfo.WorldGravityZ = GravityZ;
+    WorldInfo.WorldGravityZ = GravityZ;
+  
+  preset = new class'SuperStingrayConfig';
+  preset.SetDefaults();
+  preset.SwapButtons = false;
+  preset.DamageRadius = 120;
+  preset.DamagePlasma = BallDirectHitDamage;
+  preset.KnockbackPlasma = 20000;
+  preset.FireIntervalPlasma = 0.1667;
+  preset.FireIntervalBeam = 0.5;
+  preset.ShotCost[0] = 0;
+  preset.ShotCost[1] = 0;
+  super.ApplyPreset(preset);
 }
- 
+
 simulated function PostBeginPlay()
 {
+  local UTGame Game;
+
   Super.PostBeginPlay();
  
   VolunerabilityColorBeam.A = 255.0;
@@ -45,11 +57,24 @@ simulated function PostBeginPlay()
  
   VolunerabilityColorBall.A = 255.0;
   VolunerabilityColorBall.G = 128.0;
- 
-  SetTickGroup(ETickingGroup.TG_PreAsyncWork);
-  Enable('Tick');
+
+  Game = UTGame(WorldInfo.Game);
+  Game.DefaultInventory.Length = 1;
+  Game.DefaultInventory[0] = class'H0Weap_ScionRifle';
+
+  if (Role == ROLE_Authority)
+  {
+    SetTickGroup(ETickingGroup.TG_PreAsyncWork);
+    Enable('Tick');
+  }
 }
- 
+
+function bool CheckReplacement(Actor Other)
+{
+  return !Other.IsA('PickupFactory') && !Other.IsA('UTDroppedPickup');
+}
+
+
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
   local UTPawn victim;
@@ -82,7 +107,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
         {
           Damage = 0;
           victim.ClearBodyMatColor();
-          victim.VestArmor = BallArmor;
+          victim.VestArmor = PlasmaArmor;
         }
       }
       else if (TeamMateTag || !Injured.IsSameTeam(InstigatedBy.Pawn))
@@ -93,7 +118,7 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
           victim.SetBodyMatColor(VolunerabilityColorBeam, VolunerabilityDuration);
       }
  
-      knockbackVert = BallKnockbackVert;
+      knockbackVert = PlasmaKnockbackVert;
     }
   }
   else
@@ -121,70 +146,52 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 }
  
 
-simulated event Tick(float DeltaTime)
+simulated function Tick(float DeltaTime)
 {    
-  local UTPawn P;
-  local PlayerController PC;
-  local Projectile proj;
-     
-  foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
-    ReloadStingray(PC.Pawn);
- 
-  foreach WorldInfo.DynamicActors(class'Projectile', proj)
-  {
-    if (instr(string(proj.Class), "CRZProj_Scion") == 0 && proj.Damage != BallDirectHitDamage)
-    {
-      proj.Damage = BallDirectHitDamage;
-      proj.DamageRadius = 120;
-      proj.MomentumTransfer = 20000;
-    }
-  }
+  local UTPawn P;     
 
   if (Role == ROLE_Authority)
   {
     foreach WorldInfo.AllPawns(class'UTPawn', P)
     {
-      ReloadStingray(P);
       if (P.Physics == EPhysics.PHYS_Walking)
       {
         if (P.RemainingBodyMatDuration > 0)
           P.ClearBodyMatColor();
-        P.VestArmor = BallArmor;
+        P.VestArmor = PlasmaArmor;
       }
     }
   }
 }
  
-simulated function ReloadStingray(Pawn P)
-{
-  local UTWeapon W;
- 
-  if (P == None)
-    return;
-  W = UTWeapon(P.Weapon);
-  if (W != none && instr(string(W.Class), "ScionRifle") >= 0)
-  {
-    W.ShotCost[0] = 0;
-    W.ShotCost[1] = 0;
-    W.FireInterval[0] = BallFireRate;
-    W.FireInterval[1] = BeamFireRate;
-  }               
-}
- 
 
 function Mutate(string value, PlayerController sender)
 {
-  if (value == "i")
+  if (instr(value, "cg ") < 0)
   {
-    `log("Ball: v=" $ BallKnockbackVert $ ", r=" $ BallFireRate $", a=" $ BallArmor);
-    `log("Beam: v=" $ BeamKnockbackVert $ ", r=" $ BeamFireRate);
-    `log("Team: t=" $ TeamMateTag $ ", k=" $ TeamMateKill $ ", u=" $ TeamMateUntag);
-    `log("Grav=" $ WorldInfo.WorldGravityZ);
+    super.Mutate(value, sender);
+    return;
   }
-  else if (Left(value, 3) == "bv ")
-    BallKnockbackVert = float(Mid(value, 3));
+  
+  value = mid(value, 3, len(value)-3);
+
+  if (value == "info")
+  {
+    `log("Ball: bv=" $ PlasmaKnockbackVert $ ", ba=" $ PlasmaArmor);
+    `log("Beam: rv=" $ BeamKnockbackVert);
+    `log("Team: tt=" $ TeamMateTag $ ", tk=" $ TeamMateKill $ ", tu=" $ TeamMateUntag);
+    `log("Self: up=" $ ExtraUpSelf);
+    `log("Grav=" $ WorldInfo.WorldGravityZ);
+    return;
+  }
+
+  if (!AllowMutate)
+    return;
+
+  if (Left(value, 3) == "bv ")
+    PlasmaKnockbackVert = float(Mid(value, 3));
   else if (Left(value, 3) == "ba ")
-    BallArmor = float(Mid(value, 3));
+    PlasmaArmor = float(Mid(value, 3));
   else if (Left(value, 3) == "rv ")
     BeamKnockbackVert = float(Mid(value, 3));
   else if (Left(value, 3) == "tt ")
@@ -193,23 +200,26 @@ function Mutate(string value, PlayerController sender)
     TeamMateKill = Mid(value, 3) != "0";
   else if (Left(value, 3) == "tu ")
     TeamMateUntag = Mid(value, 3) != "0";
+  else if (Left(value, 3) == "up ")
+    ExtraUpSelf = float(Mid(Value, 3));
   else if (Left(Value, 5) == "grav ")
     WorldInfo.WorldGravityZ = float(mid(Value, 5));
-  else
-    Super.Mutate(value, sender);
 }
  
  
 defaultproperties
 {
+  bConfigWidgets=false // suppress SuperStingray config controls
+  bAllowDisableTick=false // prevent SuperStingray from disabling Tick
+
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
 
-  BallFireRate=0.1667
-  BallKnockbackVert=200
-  BeamFireRate=0.5
+  PlasmaKnockbackVert=200
   BeamKnockbackVert=550
   ExtraUpSelf=50
 
-  GroupNames[0]="STINGRAY"
+  GroupNames[0]="WEAPONMOD"
+  GroupNames[1]="WEAPONRESPAWN"
+  GroupNames[2]="STINGRAY"
 }
