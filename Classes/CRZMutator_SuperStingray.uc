@@ -394,6 +394,8 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   if (!default.bConfigWidgets)
     return;
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
+
   preset = new(none, "Preset1") class'SuperStingrayConfig';
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_SuperStingray');
 
