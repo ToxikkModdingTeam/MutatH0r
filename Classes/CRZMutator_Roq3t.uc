@@ -73,10 +73,11 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 
   super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
-  if (string(DamageType) != "CRZDmgType_RocketLauncher")
+  if (DamageType != class'CRZDmgType_RocketLauncher')
     return;
 
-  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; // MaxDamage (=InstigatedBy.Pawn.DamageScaling) seems to be applied later, so 100 is still ok here
+  // MaxDamage (=InstigatedBy.Pawn.DamageScaling) seems to be applied later, so 100 is still ok here for a direct hit
+  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; 
   if (Injured == InstigatedBy.Pawn)
   {
     Damage *= DamageFactorSelf;
@@ -115,12 +116,12 @@ simulated event Tick(float DeltaTime)
   // modify rocket projectiles
   foreach WorldInfo.DynamicActors(class'CRZProj_RocketLauncher', proj)
   {
-    if (abs(vsizesq(proj.Velocity) - proj.Speed * proj.Speed) < 10) // initial value
-    {
+    //if (abs(vsizesq(proj.Velocity) - proj.Speed * proj.Speed) < 10) // initial value
+    //{
       proj.Velocity = normal(proj.Velocity) * Speed; // override velocity
       proj.MaxSpeed = Speed;
-    }
-    proj.Damage = 100 * DamageFactorDirect;
+    //}
+    //proj.Damage ... changed through NetDamage() separately for direct hit and splash damage
     proj.DamageRadius = DamageRadius;
     proj.MomentumTransfer = Knockback;
   }
@@ -138,13 +139,12 @@ simulated event Tick(float DeltaTime)
 
 function TweakCerberus(Pawn p)
 {
-  local UTWeapon w;
+  local CRZWeap_RocketLauncher w;
 
-  if (p != none && p.Weapon != none && string(p.Weapon.Class) == "CRZWeap_RocketLauncher")
-  {
-    w = UTWeapon(p.Weapon);
+  if (p == none) return;
+  w = CRZWeap_RocketLauncher(p.Weapon);
+  if (w != none)
     w.FireInterval[0] = FireInterval;
-  }
 }
 
 function Mutate(string MutateString, PlayerController sender)
@@ -287,19 +287,20 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
 
   preset = new(none, "Preset1") class'Roq3tConfig';
 
+  // replacing 0 with 0.01 to allow the preset to identify settings that are missing in the config file (defaulting to value 0.00)
   switch(label)
   {
     case "Rocket Speed": preset.Speed = value; break;
     case "Knockback": preset.Knockback = value * 1000; break;
-    case "KB Factor Self": preset.KnockbackFactorSelf = value/100; break;
-    case "KB Factor Others": preset.KnockbackFactorOthers = value/100; break;
-    case "Min Vertical KB": preset.MinKnockbackVert = value; break;
-    case "Max Vertical KB": preset.MaxKnockbackVert = value; break;
+    case "KB Factor Self": preset.KnockbackFactorSelf = fmax(0.01, value/100); break;
+    case "KB Factor Others": preset.KnockbackFactorOthers = fmax(0.01, value/100); break;
+    case "Min Vertical KB": preset.MinKnockbackVert = fmax(0.01, value); break;
+    case "Max Vertical KB": preset.MaxKnockbackVert = fmax(0.01, value); break;
     case "Fire Rate": preset.FireInterval = value / 1000; break;
-    case "Direct Damage %": preset.DamageFactorDirect = value / 100; break;
-    case "Splash Damage %": preset.DamageFactorSplash = value / 100; break;
-    case "Self Damage %": preset.DamageFactorSelf = value/100; break;
-    case "Splash Radius": preset.DamageRadius = value; break;
+    case "Direct Damage %": preset.DamageFactorDirect = fmax(0.01, value/100); break;
+    case "Splash Damage %": preset.DamageFactorSplash = fmax(0.01, value/100); break;
+    case "Self Damage %": preset.DamageFactorSelf = fmax(0.01, value/100); break;
+    case "Splash Radius": preset.DamageRadius = fmax(0.01, value); break;
   }
 
   preset.SaveConfig();

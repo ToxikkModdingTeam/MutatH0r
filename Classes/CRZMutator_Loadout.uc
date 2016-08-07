@@ -1,7 +1,21 @@
+// This mutators allows players to spawn with a set of specified weapons or a random weapon from a specified set
+// It also has a working implementation of "Infinite Ammo"
+// UTInvManager.bInfiniteAmmo only resets the ammo count back to MaxValue when it goes below 0, which prevents shots that need more than 1 ammo
+// this implementation changes the ShotCost to 0, which shows up as INF in the ammo HUD and avoids any ammo issues
+//
+// URL-Options:
+//   ?Loadout=123456789RPA 
+//      "1"-"9" defines which weapons are in the loadout (1=Ravager, ... 9=Hellraiser) 
+//      "R" will give you a random weapon from the loadout instead of all
+//      "P" allows regular weapon pickups (with "P" they are removed from the map)
+//      "A" gives infinite ammo
+//   ?LoadoutPreset=presetname
+//      loads config settings from [presetname CRZMutator_LoadoutPreset]
+
 class CRZMutator_Loadout extends CRZMutator config(MutatH0r);
 
-const OPT_LoadoutPreset = "?LoadoutPreset=";
-const OPT_Loadout = "?Loadout=";
+const OPT_LoadoutPreset = "LoadoutPreset";
+const OPT_Loadout = "Loadout";
 
 var CRZMutator_LoadoutPreset preset;
 var array<class<Weapon> > weapons;
@@ -13,38 +27,33 @@ replication
     InfiniteAmmo;
 }
 
-function PostBeginPlay()
+simulated function PostBeginPlay()
 {
-  Super.PostBeginPlay();
+  super.PostBeginPlay();
 
-  // UTInvManager.bInfiniteAmmo only resets the ammo count back to MaxValue when it goes below 0, which prevents shots that need more than 1 ammo
-  // Without the SDKK and the ability to subclass the weapons, the only way to modify them on the client side is through Tick
-  SetTickGroup(ETickingGroup.TG_DuringAsyncWork);
-  Enable('Tick');
+  // on the server we can change the ShotCost during CheckReplacement.
+  // on the client we can only change the ShotCost through Tick after the weapon has been created
+  if (Role != ROLE_Authority)
+  {
+    SetTickGroup(ETickingGroup.TG_PreAsyncWork);
+    Enable('Tick');
+  }
 }
 
 function InitMutator(string options, out string error)
 {
-  local int idx;
-  local string s, presetId;
+  local string presetId;
   
   super.InitMutator(options, error);
 
-  // extract preset number from ?LoadoutPreset=... parameter
-  idx = instr(options, OPT_LoadoutPreset, false, true);
-  if (idx >= 0)
-  {
-    s = mid(options, idx + len(OPT_LoadoutPreset));
-    idx = instr(s, "?");
-    if (idx >= 0)
-      s = left(s, idx);
-    presetId = s;
-  }
+  // extract preset name from ?LoadoutPreset=... parameter
+  presetId = class'GameInfo'.static.ParseOption(options, OPT_LoadoutPreset);
   if (presetId == "")
     presetId = "Preset1";
 
   // load the preset and initialize internal variables
   preset = new(none, presetId) class'CRZMutator_LoadoutPreset';
+
   ApplyOptionOverrides(options);
   InitWeapons();
   if (weapons.Length == 0)
@@ -64,18 +73,9 @@ function InitMutator(string options, out string error)
 
 function ApplyOptionOverrides(string options)
 {
-  local int idx;
   local string s;
-  
-  // extract ?Loadout=... parameter
-  idx = instr(options, OPT_Loadout, false, true);
-  if (idx < 0) 
-    return;
-  
-  s = mid(options, idx + len(OPT_Loadout));
-  idx = instr(s, "?");
-  if (idx >= 0)
-    s = left(s, idx);
+
+  s = class'GameInfo'.static.ParseOption(options, OPT_Loadout);
   if (s == "")
     return;
 
@@ -137,12 +137,14 @@ function SetDefaultInventory()
 function bool CheckReplacement(Actor Other)
 {
   local UTPawn pawn;
+  local UTWeapon weap;
 
   // toxikk doesn't derive from UTAmmoPickupFactory, so check for it the dirty way
-  if (InfiniteAmmo && Other.IsA('UTItemPickupFactory') && instr(string(Other.class), "CRZAmmo_") == 0)
+  if (InfiniteAmmo && (Other.IsA('CRZAmmoPickupFactory') || Other.IsA('UTAmmoPickupFactory')))
     return false;
 
-  if (!preset.AllowWeaponPickups && (Other.IsA('UTWeaponPickupFactory') || Other.IsA('UTWeaponLocker')))
+  // toxikk doesn't derive from UTWeaponPickupFactory
+  if (!preset.AllowWeaponPickups && (Other.IsA('CRZWeaponPickupFactory') || Other.IsA('UTWeaponPickupFactory') || Other.IsA('UTWeaponLocker')))
     return false;
 
   if (preset.RandomWeapon)
@@ -150,6 +152,17 @@ function bool CheckReplacement(Actor Other)
     pawn = UTPawn(Other);
     if (pawn != None)
       SetDefaultInventory();
+  }
+
+  if (InfiniteAmmo)
+  {
+    // infinite ammo handling for server
+    weap = UTWeapon(other);
+    if (weap != none)
+    {
+      weap.ShotCost[0]=0;
+      weap.ShotCost[1]=0;
+    }
   }
 
   return super.CheckReplacement(Other);
@@ -161,6 +174,7 @@ simulated function Tick(float DeltaTime)
 
   if (InfiniteAmmo)
   {
+    // infinite ammo handling for client
     foreach WorldInfo.DynamicActors(class'UTWeapon', w)
     {
       w.ShotCost[0] = 0;
@@ -216,7 +230,6 @@ static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventDat
 
   pres.SaveConfig();
 }
-
 
 
 defaultproperties
