@@ -16,17 +16,35 @@ var float Speed;
 var bool DrawDamageRadius;
 var bool AllowMutate;
 
+var repnotify byte SettingsChanged;
+
+var bool bAllowDisableTick;
+
 replication
 {
   if (Role == ENetRole.ROLE_Authority && (bNetInitial || bNetDirty))
-    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius, AllowMutate, Speed;
+    Knockback, FireInterval, DamageFactorDirect, DamageRadius, DrawDamageRadius, AllowMutate, Speed, 
+      SettingsChanged;
+}
+
+static function CRZMutator_Roq3t GetInstance()
+{
+  local Mutator m;
+  local CRZMutator_Roq3t r;
+
+  for (m = class'WorldInfo'.static.GetWorldInfo().Game.BaseMutator; m != None; m=m.NextMutator)
+  {
+    r = CRZMutator_Roq3t(m);
+    if (r != none)
+      return r;
+  }
+  return none;
 }
 
 simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
   SetTickGroup(ETickingGroup.TG_PreAsyncWork);
-  Enable('Tick');
 }
 
 function InitMutator(string options, out string error)
@@ -65,6 +83,44 @@ function ApplyPreset(string presetName)
   DamageFactorSelf = preset.DamageFactorSelf;
   DamageRadius = preset.DamageRadius;
   DrawDamageRadius = preset.DrawDamageRadius;
+  ApplySettings();
+  ++SettingsChanged;
+}
+
+simulated function ApplySettings()
+{
+  local H0Weap_RocketLauncher w;
+  local H0Proj_RocketLauncher p;
+
+  foreach WorldInfo.DynamicActors(class'H0Weap_RocketLauncher', w)
+    w.ApplySettings();
+  foreach WorldInfo.DynamicActors(class'H0Proj_RocketLauncher', p)
+    p.ApplySettings();
+
+  if (DrawDamageRadius && WorldInfo.NetMode != NM_DedicatedServer)
+    Enable('Tick');
+  else if (bAllowDisableTick)
+    Disable('Tick');
+}
+
+function bool CheckReplacement(Actor other)
+{
+  local CRZWeap_RocketLauncher w;
+  local H0Weap_RocketLauncher r;
+  w = CRZWeap_RocketLauncher(other);
+  r = H0Weap_RocketLauncher(other);
+
+  if (w != none && r == none)
+  {
+    ReplaceWith(other, "MutatH0r.H0Weap_RocketLauncher");
+    //return false;
+  }
+  if (CRZWeaponPickupFactory(other) != none && CRZWeaponPickupFactory(other).WeaponPickupClass == class'Cruzade.CRZWeap_RocketLauncher')
+  {
+    CRZWeaponPickupFactory(other).WeaponPickupClass = class'MutatH0r.H0Weap_RocketLauncher';
+    CRZWeaponPickupFactory(other).InventoryType = class'MutatH0r.H0Weap_RocketLauncher';
+  }
+  return true;
 }
 
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, vector HitLocation, out vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
@@ -94,40 +150,10 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
 simulated event Tick(float DeltaTime)
 {	
   local UTPawn P;
-  local PlayerController PC;
-  local CRZProj_RocketLauncher proj; 
   local vector v;
-  
-  Super.Tick(Deltatime);
-
-  // modify Cerberus
-  if (Role == ROLE_Authority)
-  {
-    foreach WorldInfo.AllPawns(class'UTPawn', P)
-      TweakCerberus(P);
-  }
-  else
-  {
-    foreach WorldInfo.LocalPlayerControllers(class'PlayerController', PC)
-      TweakCerberus(PC.Pawn);
-  }
-
-
-  // modify rocket projectiles
-  foreach WorldInfo.DynamicActors(class'CRZProj_RocketLauncher', proj)
-  {
-    //if (abs(vsizesq(proj.Velocity) - proj.Speed * proj.Speed) < 10) // initial value
-    //{
-      proj.Velocity = normal(proj.Velocity) * Speed; // override velocity
-      proj.MaxSpeed = Speed;
-    //}
-    //proj.Damage ... changed through NetDamage() separately for direct hit and splash damage
-    proj.DamageRadius = DamageRadius;
-    proj.MomentumTransfer = Knockback;
-  }
 
   // draw splash radius
-  if (DrawDamageRadius && (WorldInfo.NetMode == NM_Client || WorldInfo.NetMode == NM_Standalone))
+  if (DrawDamageRadius && WorldInfo.NetMode != NM_DedicatedServer)
   {
     foreach WorldInfo.DynamicActors(class'UTPawn', P)
     {
@@ -137,15 +163,12 @@ simulated event Tick(float DeltaTime)
   }
 }
 
-function TweakCerberus(Pawn p)
+simulated event ReplicatedEvent(name varName)
 {
-  local CRZWeap_RocketLauncher w;
-
-  if (p == none) return;
-  w = CRZWeap_RocketLauncher(p.Weapon);
-  if (w != none)
-    w.FireInterval[0] = FireInterval;
+  if (varName == 'SettingsChanged')
+    ApplySettings();
 }
+
 
 function Mutate(string MutateString, PlayerController sender)
 {
@@ -224,6 +247,9 @@ function Mutate(string MutateString, PlayerController sender)
   }
 
   `log("Roq3t mutated:" @ cmd @ arg);
+
+  ++SettingsChanged;
+  ApplySettings();
 
   if (sender == none)
     return;
@@ -316,6 +342,7 @@ static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventDat
 
 defaultproperties
 {
+  bAllowDisableTick=true
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
   GroupNames[0]="CERBERUS"

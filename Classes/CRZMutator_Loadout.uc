@@ -43,18 +43,27 @@ simulated function PostBeginPlay()
 function InitMutator(string options, out string error)
 {
   local string presetId;
+  local string s;
   
   super.InitMutator(options, error);
 
-  // extract preset name from ?LoadoutPreset=... parameter
-  presetId = class'GameInfo'.static.ParseOption(options, OPT_LoadoutPreset);
-  if (presetId == "")
-    presetId = "Preset1";
+  s = class'GameInfo'.static.ParseOption(options, OPT_Loadout);
+  if (s != "")
+  {
+    preset = new() class'CRZMutator_LoadoutPreset';
+    ApplyOptionOverrides(s);
+  }
+  else
+  {
+    // extract preset name from ?LoadoutPreset=... parameter
+    presetId = class'GameInfo'.static.ParseOption(options, OPT_LoadoutPreset);
+    if (presetId == "")
+      presetId = "Preset1";
+    preset = new(none, presetId) class'CRZMutator_LoadoutPreset';
+  }
 
-  // load the preset and initialize internal variables
-  preset = new(none, presetId) class'CRZMutator_LoadoutPreset';
+  InfiniteAmmo = preset.InfiniteAmmo;
 
-  ApplyOptionOverrides(options);
   InitWeapons();
   if (weapons.Length == 0)
   {
@@ -66,19 +75,12 @@ function InitMutator(string options, out string error)
     InitWeapons();
   }
 
-  InfiniteAmmo = preset.InfiniteAmmo;
   if (!preset.RandomWeapon)
     SetDefaultInventory();
 }
 
-function ApplyOptionOverrides(string options)
+function ApplyOptionOverrides(string s)
 {
-  local string s;
-
-  s = class'GameInfo'.static.ParseOption(options, OPT_Loadout);
-  if (s == "")
-    return;
-
   preset.Ravager = instr(s, "1") >= 0;
   preset.Raven = instr(s, "2") >= 0;
   preset.Bullcraft = instr(s, "3") >= 0;

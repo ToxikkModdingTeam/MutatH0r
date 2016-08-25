@@ -4,12 +4,9 @@ var CRZMutator_SuperStingray Mut;
 
 simulated function PostBeginPlay()
 {
-  local CRZMutator_SuperStingray m; 
-
   super.PostBeginPlay();
 
-  foreach WorldInfo.DynamicActors(class'CRZMutator_SuperStingray', m)
-    Mut = m;
+  Mut = class'CRZMutator_SuperStingray'.static.GetInstance();
   ApplySettings();
 }
 

@@ -48,6 +48,20 @@ replication
       SettingsChanged;
 }
 
+static function CRZMutator_SuperStingray GetInstance()
+{
+  local Mutator m;
+  local CRZMutator_SuperStingray r;
+
+  for (m = class'WorldInfo'.static.GetWorldInfo().Game.BaseMutator; m != None; m=m.NextMutator)
+  {
+    r = CRZMutator_SuperStingray(m);
+    if (r != none)
+      return r;
+  }
+  return none;
+}
+
 simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
