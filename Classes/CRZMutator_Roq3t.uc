@@ -31,11 +31,21 @@ static function CRZMutator_Roq3t GetInstance()
 {
   local Mutator m;
   local CRZMutator_Roq3t r;
-
-  for (m = class'WorldInfo'.static.GetWorldInfo().Game.BaseMutator; m != None; m=m.NextMutator)
+  local GameInfo game;
+  
+  game = class'WorldInfo'.static.GetWorldInfo().Game;
+  if (game != none)
   {
-    r = CRZMutator_Roq3t(m);
-    if (r != none)
+    for (m = game.BaseMutator; m != None; m=m.NextMutator)
+    {
+      r = CRZMutator_Roq3t(m);
+      if (r != none)
+        return r;
+    }
+  }
+  else
+  {
+    foreach class'WorldInfo'.static.GetWorldInfo().DynamicActors(class'CRZMutator_Roq3t', r)
       return r;
   }
   return none;
@@ -300,9 +310,9 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Min Vertical KB", "Minimum vertical knockback [0]", 0, 1000, 10, preset.MinKnockbackVert, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Max Vertical KB", "Maximum vertical knockback [1000]", 0, 2000, 10, preset.MaxKnockbackVert, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate", "Time between firing 2 rockets [1000 millisec]", 500, 2000, 10, preset.FireInterval * 1000, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Direct Damage %", "Factor to adjust damage of a direct hit [100]", 0, 200, 1, preset.DamageFactorDirect * 100, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Damage %", "Factor to adjust splash damage hits [100]", 0, 200, 1, preset.DamageFactorSplash * 100, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 200, 5, preset.DamageFactorSelf*100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Direct Damage %", "Factor to adjust damage of a direct hit [100]", 0, 400, 1, preset.DamageFactorDirect * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Damage %", "Factor to adjust splash damage hits [100]", 0, 400, 1, preset.DamageFactorSplash * 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 400, 1, preset.DamageFactorSelf*100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [220]", 0, 300, 10, preset.DamageRadius, OnSliderChanged);
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Draw Splash Rad.", "Draw a circle indicating the splash damage area", preset.DrawDamageRadius, OnCheckboxClick);
 }

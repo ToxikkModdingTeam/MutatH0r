@@ -13,6 +13,7 @@ simulated function PostBeginPlay()
 
 simulated function ApplySettings()
 {
+  `log("applying projectile settings from " $ mut);
   Speed = Mut.Speed;
   MaxSpeed = fmax(MaxSpeed, Mut.Speed);
   DamageRadius = Mut.DamageRadius;
