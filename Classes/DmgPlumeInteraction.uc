@@ -166,7 +166,7 @@ exec function KillSound(optional string soundName)
   if (soundName == "")
   {
     sounds = Owner.KillSounds;
-    for (i=sounds.Length-1; i>=0; i--)
+    for (i=0; i<sounds.Length; i++)
     {
       if (msg != "") msg = msg $ ", ";
       msg = msg $ "<font color=\"" $ ((sounds[i].Label ~= Owner.KillSound) ? "#ffff00" : "#00ffff") $ "\">" $ sounds[i].Label $ "</font>";

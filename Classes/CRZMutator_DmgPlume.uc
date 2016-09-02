@@ -241,23 +241,29 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_DmgPlume');
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Numbers", "Size and appearance of damage numbers", 0, presetNames.Length - 1, 1, presetIndex, static.OnSliderChanged, DataProviderPlumes);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound", "Sound played when you kill a player", 0, class'DmgPlumeActor'.default.KillSounds.Length - 1, 1, killSoundIndex, static.OnSliderChanged, DataProviderKillSounds);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound Vol", "Kill sound volume", 0, 1000, 10, int(class'DmgPlumeActor'.default.KillSoundVolume * 100), static.OnSliderChanged);
 }
 
 function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
   local GFxObject DataProvider;
   local string presetName;
+  local SoundCue cue;
+
   DataProvider = ev.target.GetObject("dataProvider");
   presetName = DataProvider.GetElementObject(int(value)).GetString("label");
 
   if (label == "Damage Numbers")
-  {
     class'DmgPlumeActor'.default.DmgPlumeConfig = presetName;
-    class'DmgPlumeActor'.static.StaticSaveConfig();
-  }
   else if (label == "Kill Sound")
   {
     class'DmgPlumeActor'.default.KillSound = presetName;
-    class'DmgPlumeActor'.static.StaticSaveConfig();
+    cue = class'DmgPlumeActor'.static.GetKillSound(presetName);
+    if (cue != none)
+      class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController().ClientPlaySound(cue);
   }
+  else if (label == "Kill Sound Vol")
+    class'DmgPlumeActor'.default.KillSoundVolume = value/100;
+
+  class'DmgPlumeActor'.static.StaticSaveConfig();
 }

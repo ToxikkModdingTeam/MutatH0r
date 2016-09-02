@@ -27,6 +27,7 @@ var config bool bDisablePlumes;
 var config bool bDisableChatIcon;
 var config array<KillSoundInfo> KillSounds;
 var config string KillSound;
+var config float KillSoundVolume;
 
 var SoundCue KillSoundCue;
 
@@ -57,7 +58,18 @@ simulated function PostBeginPlay()
   else
     Disable('Tick');
 
-  SetKillSound(KillSound, false);  
+  SetKillSound(KillSound, false);
+}
+
+simulated static function SoundCue GetKillSound(string label)
+{
+  local int i;
+  for (i=0; i<default.KillSounds.Length; i++)
+  {
+    if (default.KillSounds[i].Label ~= label)
+      return default.KillSounds[i].Cue == "" ? none : SoundCue(class'WorldInfo'.static.GetWorldInfo().DynamicLoadObject(default.KillSounds[i].Cue, class'SoundCue'));
+  }
+  return none;
 }
 
 simulated function bool SetKillSound(string label, optional bool saveIni = true)
@@ -163,7 +175,12 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
 unreliable client function PlayKillSound()
 {
   if (KillSoundCue != none)
-    PlumeInteraction.PC.ClientPlaySound(KillSoundCue);
+  {
+    //PlumeInteraction.PC.ClientPlaySound(KillSoundCue);
+    PlumeInteraction.PC.Kismet_ClientPlaySound(KillSoundCue, self, KillSoundVolume, 1, 0, true, true);
+  }
+  else
+    `Log("no sound cue for " $ KillSound);
 }
 
 simulated function UpdateTypingStatus()
