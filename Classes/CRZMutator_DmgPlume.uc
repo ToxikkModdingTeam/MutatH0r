@@ -28,8 +28,11 @@ struct PlumeReceiver
   var array<PlumeVictimInfo> Victims;
 };
 
+
 // server
 var array<PlumeReceiver> PlumeReceivers;
+
+
 
 function PostBeginPlay()
 {
@@ -177,15 +180,27 @@ function NotifyLogout(Controller C)
   super.NotifyLogout(C);
 }
 
+function ScoreKill (Controller killer, Controller killed)
+{
+  local int i;
+
+  super.ScoreKill(killer, killed);
+
+  if (killer != killed && PlayerController(killer) != none)
+  {
+    i = GetOrAddPlumeReceiver(killer);
+    PlumeReceivers[i].Actor.PlayKillSound();
+  }
+}
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
   local GFxObject TempObj;
-  local GFxObject DataProvider;
+  local GFxObject DataProviderPlumes, DataProviderKillSounds;
   local int i,j;
   local array<string> presetNames;
   local string presetName;
-  local int presetIndex;
+  local int presetIndex, killSoundIndex;
 
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
@@ -197,7 +212,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   }
   presetNames.AddItem("off");
 
-  DataProvider = ConfigView.outer.CreateArray();
+  DataProviderPlumes = ConfigView.outer.CreateArray();
   j=0;
   for(i=presetNames.Length-1; i>=0; i--)
   {
@@ -205,24 +220,44 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 
     TempObj = ConfigView.MenuManager.CreateObject("Object");
     TempObj.SetString("label", presetName);
-    DataProvider.SetElementObject(j, TempObj);
+    DataProviderPlumes.SetElementObject(j, TempObj);
 
     if (presetName == class'DmgPlumeActor'.default.DmgPlumeConfig)
       presetIndex = j;
     ++j;
   }
 
+  DataProviderKillSounds = ConfigView.outer.CreateArray();
+  for(i=0; i<class'DmgPlumeActor'.default.KillSounds.Length; i++)
+  {
+    TempObj = ConfigView.MenuManager.CreateObject("Object");
+    TempObj.SetString("label", class'DmgPlumeActor'.default.KillSounds[i].Label);
+    DataProviderKillSounds.SetElementObject(i, TempObj);
+
+    if (class'DmgPlumeActor'.default.KillSounds[i].Label == class'DmgPlumeActor'.default.KillSound)
+      killSoundIndex = i;
+  }
+
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_DmgPlume');
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Preset", "Size and appearance of damage numbers", 0, presetNames.Length - 1, 1, presetIndex, static.OnPresetChanged, DataProvider);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Numbers", "Size and appearance of damage numbers", 0, presetNames.Length - 1, 1, presetIndex, static.OnSliderChanged, DataProviderPlumes);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound", "Sound played when you kill a player", 0, class'DmgPlumeActor'.default.KillSounds.Length - 1, 1, killSoundIndex, static.OnSliderChanged, DataProviderKillSounds);
 }
 
-function static OnPresetChanged(string label, float value, GFxClikWidget.EventData ev)
+function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
   local GFxObject DataProvider;
   local string presetName;
   DataProvider = ev.target.GetObject("dataProvider");
   presetName = DataProvider.GetElementObject(int(value)).GetString("label");
 
-  class'DmgPlumeActor'.default.DmgPlumeConfig = presetName;
-  class'DmgPlumeActor'.static.StaticSaveConfig();
+  if (label == "Damage Numbers")
+  {
+    class'DmgPlumeActor'.default.DmgPlumeConfig = presetName;
+    class'DmgPlumeActor'.static.StaticSaveConfig();
+  }
+  else if (label == "Kill Sound")
+  {
+    class'DmgPlumeActor'.default.KillSound = presetName;
+    class'DmgPlumeActor'.static.StaticSaveConfig();
+  }
 }

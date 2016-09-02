@@ -15,10 +15,21 @@ struct TypingInfo
   var bool bTyping;
 };
 
+struct KillSoundInfo
+{
+  var string Label;
+  var string Cue;
+};
+
 var config string DmgPlumeConfig;
 var config bool bDisablePlumes;
 //var config bool bDisableCrosshairNames;
 var config bool bDisableChatIcon;
+var config array<KillSoundInfo> KillSounds;
+var config string KillSound;
+
+var SoundCue KillSoundCue;
+
 
 var CRZMutator_DmgPlume Mut;
 var DmgPlumeConfig Settings;
@@ -45,6 +56,25 @@ simulated function PostBeginPlay()
   }
   else
     Disable('Tick');
+
+  SetKillSound(KillSound, false);  
+}
+
+simulated function bool SetKillSound(string label, optional bool saveIni = true)
+{
+  local int i;
+  for (i=0; i<KillSounds.Length; i++)
+  {
+    if (KillSounds[i].Label ~= label)
+    {
+      KillSoundCue = KillSounds[i].Cue == "" ? none : SoundCue(DynamicLoadObject(KillSounds[i].Cue, class'SoundCue'));
+      KillSound = KillSounds[i].Label;
+      if (saveIni)
+        self.SaveConfig();
+      return true;
+    }
+  }
+  return false;
 }
 
 simulated function bool LoadPreset(string preset)
@@ -130,6 +160,11 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
   }
 }
 
+unreliable client function PlayKillSound()
+{
+  if (KillSoundCue != none)
+    PlumeInteraction.PC.ClientPlaySound(KillSoundCue);
+}
 
 simulated function UpdateTypingStatus()
 {

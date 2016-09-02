@@ -157,6 +157,32 @@ exec function Plumes(optional string preset)
   }    
 }
 
+exec function KillSound(optional string soundName)
+{
+  local int i;
+  local string msg;
+  local array<DmgPlumeActor.KillSoundInfo> sounds;
+
+  if (soundName == "")
+  {
+    sounds = Owner.KillSounds;
+    for (i=sounds.Length-1; i>=0; i--)
+    {
+      if (msg != "") msg = msg $ ", ";
+      msg = msg $ "<font color=\"" $ ((sounds[i].Label ~= Owner.KillSound) ? "#ffff00" : "#00ffff") $ "\">" $ sounds[i].Label $ "</font>";
+    }
+
+    PC.ClientMessage("Usage: <font color=\"#ffff00\">KillSound </font>&lt;<font color=\"#00ffff\">soundName</font>&gt; with one of these sound names: " $ msg);
+  }
+  else
+  {
+    if (!Owner.SetKillSound(soundName))
+      PC.ClientMessage("Unknown sound name. Use KillSound without a parameter to get a list of supported sounds");
+  }    
+}
+
+
+
 //exec function CrosshairNames(bool show)
 //{
 //  if (Owner != None)
