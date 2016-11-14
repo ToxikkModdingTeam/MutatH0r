@@ -13,6 +13,7 @@ const OPT_Mutate = "Roq3tMutate";
 var float Knockback, KnockbackFactorOthers, KnockbackFactorSelf, MinKnockbackVert, MaxKnockbackVert, FireInterval, DamageFactorDirect, DamageFactorSplash;
 var float DamageFactorSelf, DamageRadius;
 var float Speed;
+var int InitialAmmo, MaxAmmo, PickupAmmo;
 var bool DrawDamageRadius;
 var bool AllowMutate;
 
@@ -88,6 +89,9 @@ function ApplyPreset(string presetName)
   MinKnockbackVert = preset.MinKnockbackVert;
   MaxKnockbackVert = preset.MaxKnockbackVert;
   FireInterval = preset.FireInterval;
+  InitialAmmo = preset.InitialAmmo;
+  MaxAmmo = preset.MaxAmmo;
+  PickupAmmo = preset.PickupAmmo;
   DamageFactorDirect = preset.DamageFactorDirect;
   DamageFactorSplash = preset.DamageFactorSplash;
   DamageFactorSelf = preset.DamageFactorSelf;
@@ -143,7 +147,10 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
     return;
 
   // MaxDamage (=InstigatedBy.Pawn.DamageScaling) seems to be applied later, so 100 is still ok here for a direct hit
-  Damage *= Damage == 100 ? DamageFactorDirect : DamageFactorSplash; 
+  if (Damage == 100)
+    Damage = Damage * DamageFactorDirect; 
+  else
+    Damage = FMin(Damage * DamageFactorSplash, 100); 
   if (Injured == InstigatedBy.Pawn)
   {
     Damage *= DamageFactorSelf;
@@ -250,6 +257,8 @@ function Mutate(string MutateString, PlayerController sender)
     DamageFactorSelf = float(arg);
   else if (cmd ~= "DrawDamageRadius")
     DrawDamageRadius = bool(arg);
+  else if (cmd ~= "DamageRadius")
+    DamageRadius = float(arg);
   else
   {
     sender.ClientMessage("Roq3t: unknown command: " $ cmd @ arg);
@@ -299,6 +308,8 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
   local Roq3tConfig preset;
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
+
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   preset = new(none, "Preset1") class'Roq3tConfig';
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Roq3t');
@@ -313,8 +324,11 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Direct Damage %", "Factor to adjust damage of a direct hit [100]", 0, 400, 1, preset.DamageFactorDirect * 100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Damage %", "Factor to adjust splash damage hits [100]", 0, 400, 1, preset.DamageFactorSplash * 100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 400, 1, preset.DamageFactorSelf*100, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [220]", 0, 300, 10, preset.DamageRadius, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [190]", 0, 300, 10, preset.DamageRadius, OnSliderChanged);
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Draw Splash Rad.", "Draw a circle indicating the splash damage area", preset.DrawDamageRadius, OnCheckboxClick);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Initial Ammo", "Ammo when you pick up a fresh Cerberus [10]", 1, 50, 1, preset.InitialAmmo, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Max Ammo", "Max amount of ammo you can hold [20]", 1, 50, 1, preset.MaxAmmo, OnSliderChanged);
+//  class'MutConfigHelper'.static.AddSlider(ConfigView, "Pickup Ammo", "Amount of ammo added from a pickup [5]", 1, 10, 1, preset.PickupAmmo, OnSliderChanged);
 }
 
 function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
@@ -337,6 +351,9 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
     case "Splash Damage %": preset.DamageFactorSplash = fmax(0.01, value/100); break;
     case "Self Damage %": preset.DamageFactorSelf = fmax(0.01, value/100); break;
     case "Splash Radius": preset.DamageRadius = fmax(0.01, value); break;
+    case "Initial Ammo": preset.InitialAmmo = value; break;
+    case "Max Ammo": preset.MaxAmmo = value; break;
+    case "Pickup Ammo": preset.PickupAmmo = value; break;
   }
 
   preset.SaveConfig();

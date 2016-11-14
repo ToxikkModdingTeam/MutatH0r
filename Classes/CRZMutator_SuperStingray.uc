@@ -23,7 +23,7 @@ var float DamagePlasma, DamageBeam, DamageCombo;
 var float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var float TagDuration;
 var float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
-var float FireIntervalPlasma, FireIntervalBeam;
+var float FireIntervalPlasma, FireIntervalBeam, DrawScalePlasma;
 var bool receivedWelcomeMessage;
 var LinearColor TagColor;
 var bool DrawDamageRadius;
@@ -117,6 +117,7 @@ function ApplyPreset(SuperStingrayConfig preset)
   DrawDamageRadius = preset.DrawDamageRadius;
   DamageFactorSelf = preset.DamageFactorSelf;
   DamageFactorSplash = preset.DamageFactorSplash;
+  DrawScalePlasma = preset.DrawScalePlasma;
   KnockbackPlasma = preset.KnockbackPlasma;
   KnockbackBeam = preset.KnockbackBeam;
   LevitationSelf = preset.LevitationSelf;
@@ -357,6 +358,8 @@ function Mutate(string MutateString, PlayerController Sender)
     FireIntervalBeam = float(arg);
   else if (cmd ~= "DrawDamageRadius")
     DrawDamageRadius = bool(arg);
+  else if (cmd ~= "DrawScalePlasma")
+    DrawScalePlasma = float(arg);
   else
   {
     sender.ClientMessage("SuperStingray: unknown command: " $ cmd @ arg);
@@ -396,7 +399,7 @@ function ShowInfo(PlayerController pc)
   // reverse order for chat log
   pc.ClientMessage("LevitationOthers=" $ LevitationOthers $ ", LevitationSelf=" $ LevitationSelf, 'Info');
   pc.ClientMessage("DamageBeam=" $ DamageBeam $ ", FireIntervalBeam=" $ FireIntervalBeam $ ", KnockbackBeam=" $ KnockbackBeam, 'Info');
-  pc.ClientMessage("DamageCombo=" $ DamageCombo $ ", TagDuration=" $ TagDuration, 'Info');
+  pc.ClientMessage("DamageCombo=" $ DamageCombo $ ", TagDuration=" $ TagDuration $ ", DrawScalePlasma=" $ DrawScalePlasma, 'Info');
   pc.ClientMessage("DamageFactorSplash=" $ DamageFactorSplash $ ", DamageFactorSelf=" $ DamageFactorSelf $ ", KnockbackPlasma=" $ KnockbackPlasma, 'Info');
   pc.ClientMessage("DamagePlasma=" $ DamagePlasma $ ", FireIntervalPlasma=" $ FireIntervalPlasma $ ", DamageRadius=" $ DamageRadius, 'Info');
   pc.ClientMessage("_____ SuperStingray settings _____");

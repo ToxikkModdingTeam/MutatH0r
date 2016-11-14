@@ -13,7 +13,6 @@ simulated function PostBeginPlay()
 
 simulated function ApplySettings()
 {
-  `log("applying projectile settings from " $ mut);
   Speed = Mut.Speed;
   MaxSpeed = fmax(MaxSpeed, Mut.Speed);
   DamageRadius = Mut.DamageRadius;
@@ -23,7 +22,7 @@ simulated function ApplySettings()
 DefaultProperties
 {
   //Damage = 100
-  //DamageRadius = 220
+  //DamageRadius = 190
   //MomentumTransfer = 85000
   //TeamIndex=1
   Name="Default__H0Proj_RocketLauncher"

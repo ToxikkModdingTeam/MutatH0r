@@ -5,7 +5,7 @@ var config float DamagePlasma, DamageBeam, DamageCombo;
 var config float KnockbackPlasma, KnockbackBeam, DamageRadius;
 var config float TagDuration;
 var config float DamageFactorSelf, DamageFactorSplash, LevitationSelf, LevitationOthers;
-var config float FireIntervalPlasma, FireIntervalBeam;
+var config float FireIntervalPlasma, FireIntervalBeam, DrawScalePlasma;
 var config LinearColor TagColor;
 var config bool DrawDamageRadius;
 var config array<int> ShotCost;
@@ -18,6 +18,8 @@ function SetDefaults()
     DamageBeam = 45;
   if (DamageFactorSelf == 0)
     DamageFactorSelf = 1;
+  if (DrawScalePlasma == 0)
+    DrawScalePlasma = 1.1;
   
   if (KnockbackBeam == 0)
     KnockbackBeam = 20000;

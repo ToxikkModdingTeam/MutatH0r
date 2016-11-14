@@ -1,8 +1,5 @@
 /*
- * This class solves a few problems in TOXIKK 0.96's custom mutator config
- * - the mutator class / package gets garbage collected and the next call to the widget event listener causes an application crash
- * - when initializing a slider widget with a value, the widget returns 0 during the change notification instead of the current value
- * - this class wraps the event listeners and provides additional context information so that multiple controls can use the same handler
+ * this class wraps the event listeners and provides additional context information so that multiple controls can use the same handler
  */
 
 class MutConfigHelper extends Actor;

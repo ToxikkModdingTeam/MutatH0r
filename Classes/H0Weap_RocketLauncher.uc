@@ -13,6 +13,8 @@ simulated function PostBeginPlay()
 simulated function ApplySettings()
 {
   FireInterval[0] = Mut.FireInterval;
+  AmmoCount = Mut.InitialAmmo;
+  MaxAmmoCount = Mut.MaxAmmo;
 }
 
 DefaultProperties

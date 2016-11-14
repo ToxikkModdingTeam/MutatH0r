@@ -30,8 +30,8 @@ struct PlumeReceiver
 
 
 // server
+var config string forceKillSound;
 var array<PlumeReceiver> PlumeReceivers;
-
 
 
 function PostBeginPlay()
@@ -143,10 +143,15 @@ function int GetOrAddPlumeReceiver(Controller C)
 
 function NotifyLogin(Controller C)
 {
+  local int i;
   super.NotifyLogin(C);
 
   if (PlayerController(C) != None)
-    GetOrAddPlumeReceiver(C);
+  {
+    i = GetOrAddPlumeReceiver(C);
+    if (i>=0 && forceKillSound != "")
+      PlumeReceivers[i].Actor.SetKillSound(forceKillSound);
+  }
 }
 
 function NotifyLogout(Controller C)
@@ -191,6 +196,22 @@ function ScoreKill (Controller killer, Controller killed)
     i = GetOrAddPlumeReceiver(killer);
     PlumeReceivers[i].Actor.PlayKillSound();
   }
+}
+
+function SetForceKillSound(string soundId)
+{
+  local int i;
+  forceKillSound = soundId;
+  for (i=0; i<plumeReceivers.Length; i++)
+    PlumeReceivers[i].Actor.SetKillSound(soundId, false);
+}
+
+function Mutate(string MutateString, PlayerController sender)
+{
+  if (instr(locs(MutateString), "forcekillsound") == 0)
+    SetForceKillsound(mid(MutateString, 15));
+  else
+    super.Mutate(MutateString, sender);
 }
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
@@ -241,7 +262,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_DmgPlume');
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Numbers", "Size and appearance of damage numbers", 0, presetNames.Length - 1, 1, presetIndex, static.OnSliderChanged, DataProviderPlumes);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound", "Sound played when you kill a player", 0, class'DmgPlumeActor'.default.KillSounds.Length - 1, 1, killSoundIndex, static.OnSliderChanged, DataProviderKillSounds);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound Vol", "Kill sound volume", 0, 1000, 10, int(class'DmgPlumeActor'.default.KillSoundVolume * 100), static.OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound Vol", "Kill sound volume", 0, 400, 5, int(class'DmgPlumeActor'.default.KillSoundVolume * 100), static.OnSliderChanged);
 }
 
 function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
@@ -251,7 +272,7 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
   local SoundCue cue;
 
   DataProvider = ev.target.GetObject("dataProvider");
-  presetName = DataProvider.GetElementObject(int(value)).GetString("label");
+  presetName = DataProvider == none ? "" : DataProvider.GetElementObject(int(value)).GetString("label");
 
   if (label == "Damage Numbers")
     class'DmgPlumeActor'.default.DmgPlumeConfig = presetName;

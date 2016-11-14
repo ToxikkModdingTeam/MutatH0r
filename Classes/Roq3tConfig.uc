@@ -12,6 +12,9 @@ var config float DamageFactorSplash;
 var config float DamageFactorSelf;
 var config float DamageRadius;
 var config bool DrawDamageRadius;
+var config int InitialAmmo;
+var config int PickupAmmo;
+var config int MaxAmmo;
 
 function SetDefaults()
 {
@@ -36,5 +39,11 @@ function SetDefaults()
   if (DamageFactorSelf == 0)
     DamageFactorSelf = 1.0;
   if (DamageRadius == 0)
-    DamageRadius = 220;
+    DamageRadius = 190;
+  if (InitialAmmo == 0)
+    InitialAmmo = 10;
+  if (PickupAmmo == 0)
+    PickupAmmo = 5;
+  if (MaxAmmo == 0)
+    MaxAmmo = 20;
 }

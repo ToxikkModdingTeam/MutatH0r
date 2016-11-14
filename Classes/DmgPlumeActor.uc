@@ -18,7 +18,7 @@ struct TypingInfo
 struct KillSoundInfo
 {
   var string Label;
-  var string Cue;
+  var string Wave;
 };
 
 var config string DmgPlumeConfig;
@@ -64,10 +64,23 @@ simulated function PostBeginPlay()
 simulated static function SoundCue GetKillSound(string label)
 {
   local int i;
+  local SoundNodeWave wave;
+  local SoundCue cue;
+
   for (i=0; i<default.KillSounds.Length; i++)
   {
     if (default.KillSounds[i].Label ~= label)
-      return default.KillSounds[i].Cue == "" ? none : SoundCue(class'WorldInfo'.static.GetWorldInfo().DynamicLoadObject(default.KillSounds[i].Cue, class'SoundCue'));
+    {
+      if (default.KillSounds[i].Wave == "")
+        return none;
+      wave = SoundNodeWave(class'WorldInfo'.static.GetWorldInfo().DynamicLoadObject(default.KillSounds[i].Wave, class'SoundNodeWave'));
+      if (wave == none)
+        return none;
+      cue = new class'SoundCue';
+      cue.FirstNode = wave;
+      cue.VolumeMultiplier = 0.25 * default.KillSoundVolume;
+      return cue;
+    }
   }
   return none;
 }
@@ -75,11 +88,21 @@ simulated static function SoundCue GetKillSound(string label)
 simulated function bool SetKillSound(string label, optional bool saveIni = true)
 {
   local int i;
+  local SoundNodeWave wave;
+
   for (i=0; i<KillSounds.Length; i++)
   {
     if (KillSounds[i].Label ~= label)
     {
-      KillSoundCue = KillSounds[i].Cue == "" ? none : SoundCue(DynamicLoadObject(KillSounds[i].Cue, class'SoundCue'));
+      wave = KillSounds[i].Wave == "" ? none : SoundNodeWave(DynamicLoadObject(KillSounds[i].Wave, class'SoundNodeWave'));
+      if (wave == none)
+        KillSoundCue = none;
+      else
+      {
+        KillSoundCue = new class'SoundCue';
+        KillSoundCue.FirstNode = wave;
+        KillSoundCue.VolumeMultiplier = 0.75 * KillSoundVolume;
+      }
       KillSound = KillSounds[i].Label;
       if (saveIni)
         self.SaveConfig();
@@ -175,10 +198,7 @@ unreliable client function AddPlumes(PlumeRepInfo repInfo)
 unreliable client function PlayKillSound()
 {
   if (KillSoundCue != none)
-  {
-    //PlumeInteraction.PC.ClientPlaySound(KillSoundCue);
-    PlumeInteraction.PC.Kismet_ClientPlaySound(KillSoundCue, self, KillSoundVolume, 1, 0, true, true);
-  }
+    PlumeInteraction.PC.ClientPlaySound(KillSoundCue);
   else
     `Log("no sound cue for " $ KillSound);
 }
