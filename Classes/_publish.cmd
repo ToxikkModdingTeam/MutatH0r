@@ -26,9 +26,9 @@ for %%d in (f:\games\Steam\SteamApps\common\TOXIKK\UDKGame c:\steamcmd\steamapps
   if errorlevel 1 set error=1
   
   if not "%%d" == "f:\games\Steam\SteamApps\common\TOXIKK\WorkshopUploader\MutatH0r\UploadContent" (
-    copy PredatH0r.u %%d\Script >nul
+    rem copy PredatH0r.u %%d\Script >nul
     if errorlevel 1 set error=1 
-    copy UDKPredatH0r.ini %%d\Config >nul
+    rem copy UDKPredatH0r.ini %%d\Config >nul
     if errorlevel 1 set error=1
   )
 )

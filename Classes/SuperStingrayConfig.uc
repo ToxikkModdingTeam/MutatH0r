@@ -13,7 +13,13 @@ var config array<int> ShotCost;
 function SetDefaults()
 {
   if (DamagePlasma == 0)
-    DamagePlasma = 35;
+  {
+    DamagePlasma = 12;
+    if (DamageCombo == 0)
+      DamageCombo = 8;
+    if (KnockbackPlasma == 0)
+      KnockbackPlasma = 15000;
+  }
   if (DamageBeam == 0)
     DamageBeam = 45;
   if (DamageFactorSelf == 0)
@@ -25,7 +31,7 @@ function SetDefaults()
     KnockbackBeam = 20000;
   
   if (FireIntervalPlasma == 0)
-    FireIntervalPlasma = 0.1667;
+    FireIntervalPlasma = 0.125;
   if (FireIntervalBeam == 0)
     FireIntervalBeam = 0.77;
 

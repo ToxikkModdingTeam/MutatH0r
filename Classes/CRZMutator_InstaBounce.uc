@@ -19,9 +19,9 @@ function InitMutator(string options, out string error)
   super.InitMutator(options, error);
 
   if (KnockbackBall == 0)
-    KnockbackBall = 50;
+    KnockbackBall = 85;
   if (SplashRadius == 0)
-    SplashRadius = 150;
+    SplashRadius = 220;
   if (FireInterval == 0)
     FireInterval = 50;
 
@@ -40,13 +40,16 @@ function InitMutator(string options, out string error)
 
 simulated function PostBeginPlay()
 {
-  local UTGame Game;
+  local CRZGame Game;
 
   Super.PostBeginPlay();
 
-  Game = UTGame(WorldInfo.Game);
+  Game = CRZGame(WorldInfo.Game);
   Game.DefaultInventory.Length = 1;
   Game.DefaultInventory[0] = class'H0Weap_ScionRifle';
+  Game.bAllowStealth = false;
+  Game.MinRespawnDelay = 0.5;
+  //Game.bForceRespawn = true;
 }
 
 function bool CheckReplacement(Actor Other)
@@ -61,7 +64,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_InstaBounce');
 
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force of the splash blast [85]", 0, 100, 1, default.KnockbackBall, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius of the splash blast [150]", 0, 300, 5, default.SplashRadius, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius of the splash blast [220]", 0, 300, 5, default.SplashRadius, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Ball Fire Rate", "Time between firing two balls [500 millisec]", 100, 2000, 10, default.FireInterval * 10, OnSliderChanged);
 }
 
@@ -80,5 +83,6 @@ defaultproperties
   bAlwaysRelevant=true
   GroupNames[0]="WEAPONMOD"
   GroupNames[1]="WEAPONRESPAWN"
-  GroupNames[2]="STINGRAY"
+  GroupNames[2]="STEALTH"
+  GroupNames[3]="STINGRAY"
 }

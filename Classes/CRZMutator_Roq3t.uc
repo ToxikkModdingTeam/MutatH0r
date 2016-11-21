@@ -81,7 +81,11 @@ function ApplyPreset(string presetName)
     presetName = "Preset1";
   preset = new(none, presetName) class'Roq3tConfig';
   preset.SetDefaults();
+  ApplyConfig(preset);
+}
 
+function ApplyConfig(Roq3tConfig preset)
+{
   Speed = preset.Speed;
   Knockback = preset.Knockback;
   KnockbackFactorSelf = preset.KnockbackFactorSelf;

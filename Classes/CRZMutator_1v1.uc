@@ -22,7 +22,7 @@ function PostBeginPlay()
   super.PostBeginPlay();
   decay = Spawn(class'CRZMutator_RegenDecay', self);
   
-  worldInfo.Game.MaxPlayers = 2;
+  //worldInfo.Game.MaxPlayers = 2;
 
   SetMegaItemState('Disabled');
   Set50ArmorState('Disabled');
@@ -37,9 +37,9 @@ function InitMutator(string options, out string errorMsg)
 
   decay.HealthRegenLimit=0;
   decay.HealthRegenAmount=0;
-  decay.HealthDecayUpperLimit=100;
+  decay.HealthDecayUpperLimit=150;
   decay.HealthDecayUpperAmount=1;
-  decay.HealthDecayLowerLimit=100;
+  decay.HealthDecayLowerLimit=150;
   decay.HealthDecayLowerAmount=1;
   decay.ArmorRegenLimit=0;
   decay.ArmorRegenAmount=0;

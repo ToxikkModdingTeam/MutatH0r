@@ -427,15 +427,15 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_SuperStingray');
 
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Swap Buttons", "Swap primary and secondary fire", preset.SwapButtons, OnCheckboxClick);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [17]", 0, 400, 1, preset.DamagePlasma, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Ball", "Damage dealt by a direct plasma ball hit [12]", 0, 400, 1, preset.DamagePlasma, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Beam", "Damage dealt by a beam hit [45]", 0, 400, 1, preset.DamageBeam, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Combo", "Extra damage per ball when following up with a beam [8]", 0, 100, 1, preset.DamageCombo, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [167 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Ball", "Time between firing 2 plasma balls [125 millisec]", 0, 2000, 10, preset.FireIntervalPlasma * 1000, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Fire Rate Beam", "Time between firing 2 beams [770 millisec]", 0, 2000, 10, preset.FireIntervalBeam * 1000, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [200]", 0, 350, 10, preset.KnockbackPlasma / 100, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Ball", "Force pushing player away from point of impact [150]", 0, 350, 10, preset.KnockbackPlasma / 100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback Beam", "Force pushing player away [200]", -1000, 1000, 10, preset.KnockbackBeam / 100, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [50]", 0, 200, 5, preset.LevitationSelf, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [100]", 0, 200, 5, preset.LevitationOthers, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift yourself", "Lifting yourself up with splash damage [0]", 0, 200, 5, preset.LevitationSelf, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Lift others", "Lifting other players up with splash damage [0]", 0, 200, 5, preset.LevitationOthers, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Self Damage %", "Splash damage you do to yourself [100]", 0, 400, 5, preset.DamageFactorSelf*100, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius around ball impact for splash damage [120]", 0, 200, 10, preset.DamageRadius, OnSliderChanged);
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Draw Splash Rad.", "Draw a circle indicating the splash damage area", preset.DrawDamageRadius, OnCheckboxClick);
