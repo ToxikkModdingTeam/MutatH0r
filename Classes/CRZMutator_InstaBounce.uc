@@ -26,6 +26,13 @@ function InitMutator(string options, out string error)
     FireInterval = 50;
 
   preset = new class'SuperStingrayConfig';
+  InitPreset(preset);
+  super.ApplyPreset(preset);
+}
+
+// subclasses may override this and provide different settings
+simulated function InitPreset(SuperStingrayConfig preset)
+{
   preset.SetDefaults();
   preset.SwapButtons = true;
   preset.KnockbackPlasma = KnockbackBall * 1000;
@@ -35,7 +42,6 @@ function InitMutator(string options, out string error)
   preset.DamageBeam = 1000;
   preset.ShotCost[0] = 0;
   preset.ShotCost[1] = 0;
-  super.ApplyPreset(preset);
 }
 
 simulated function PostBeginPlay()

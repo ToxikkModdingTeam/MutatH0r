@@ -72,6 +72,10 @@ function RenderTickRate(Canvas canvas)
   local vector v;
   local string text;
   local bool canDoubleJump;
+  local float r, deg2rad;
+  local vector2D c0, c1, c2;
+  local color col;
+  local int speed;
 
   p = CRZPawn(PC.Pawn);
   if (p == none)
@@ -105,7 +109,8 @@ function RenderTickRate(Canvas canvas)
   canvas.DrawRect(95, 79);
   
   // draw H
-  text = "H: " $ string(int(VSize(v) + 0.5));
+  speed = int(VSize(v) + 0.5);
+  text = "H: " $ string(speed);
   canvas.DrawColor = inp.Outer.DoubleClickDir == DCLICK_Done ? TextColorRed : TextColor; 
   canvas.Font = MessageFont;
   canvas.SetPos(x + 2, y + 2);
@@ -128,8 +133,23 @@ function RenderTickRate(Canvas canvas)
   canvas.DrawText(text, false, 1.0, 1.0);
 
   // draw velocity vector line
-  v = v << PC.Rotation;
-  canvas.Draw2DLine(Canvas.ClipX / 2, Canvas.ClipY / 2, Canvas.ClipX / 2 + v.Y/5, Canvas.ClipY / 2 - v.X/5, VeloColor);
+  v = v << p.Rotation;
+  col = speed < 400 ? TextColorRed : (speed <= 660 ? TextColor : (speed <= 730 ? VeloColor : TextColorGreen));
+  canvas.Draw2DLine(Canvas.ClipX / 2, Canvas.ClipY / 2, Canvas.ClipX / 2 + v.Y/5, Canvas.ClipY / 2 - v.X/5, col);
+
+  c0.X = Canvas.ClipX/2;
+  c0.Y = Canvas.ClipY/2;
+  deg2rad=PI/180;
+  c2 = c0;
+  c2.Y -= 660/5;
+  for (r=1; r<=360; r+=1)
+  {
+    c1 = c2;
+    c2 = c0;
+    c2.X += 660/5 * sin(r * deg2rad);
+    c2.Y -= 660/5 * cos(r * deg2rad);
+    canvas.Draw2DLine(c1.X, c1.Y, c2.X, c2.Y, VeloColor);
+  }
 }
 
 event NotifyGameSessionEnded()

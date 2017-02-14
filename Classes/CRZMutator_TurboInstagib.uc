@@ -1,4 +1,4 @@
-class CRZMutator_TurboInstagib extends CRZMutator_Instagib;
+class CRZMutator_TurboInstagib extends CRZMutator_InstaBounce;
 
 /*
  * Composite mutator for Turbo Instagib
@@ -9,18 +9,27 @@ class CRZMutator_TurboInstagib extends CRZMutator_Instagib;
  * - change gravity to -350 (to keep timing for movement the same)
  * */
 
-function PostBeginPlay()
+simulated function PostBeginPlay()
 {
   local CRZGame Game;
 
   super.PostBeginPlay();
 
-  WorldInfo.WorldGravityZ = -350;
-  Game = CRZGame(WorldInfo.Game);
-  Game.SetGameSpeed(1.35);
-  Game.MinRespawnDelay = 0.5;
-  Game.bAllowStealth = false;
-  //Game.bForceRespawn = true;
+  if (Role == ENetRole.ROLE_Authority)
+  {
+    WorldInfo.WorldGravityZ = -350;
+    Game = CRZGame(WorldInfo.Game);
+    Game.SetGameSpeed(1.35);
+    Game.MinRespawnDelay = 0.5;
+    Game.bAllowStealth = false;
+    //Game.bForceRespawn = true;
+  }
+}
+
+simulated function InitPreset(SuperStingrayConfig preset)
+{
+  super.InitPreset(preset);
+  preset.KnockbackPlasma = 50*1000;
 }
 
 DefaultProperties
