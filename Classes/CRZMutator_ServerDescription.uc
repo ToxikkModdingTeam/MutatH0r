@@ -21,22 +21,22 @@ function InitMutator(string options, out string error)
   _options = options;
   // at the time InitMutator is executed, WorldInfo.Game.GameInterface isn't initialized yet, so we need to delay our work
   SetTimer(1.0, false, 'UpdateGameSettings');
+
+  // testing
+  //`log("URL-Decode: (empty): " $ UrlDecode(""));
+  //`log("URL-Decode: a:" $ UrlDecode("a"));
+  //`log("URL-Decode: ab:" $ UrlDecode("ab"));
+  //`log("URL-Decode: abc:" $ UrlDecode("abc"));
+  //`log("URL-Decode: ?:" $ UrlDecode("%3F"));
+  //`log("URL-Decode: x?y:" $ UrlDecode("x%3Fy"));
+  //`log("URL-Decode: %a:" $ UrlDecode("%a")); // invalid encoding
 }
 
 function UpdateGameSettings()
 {
-  local string serverDescription, sep, muts;
   local OnlineGameInterface gameInterface;
   local OnlineGameSettings gameSettings;
-  local Mutator mut;
-  local CRZUIDataProvider_Mutator mutInfo;
-  local Object obj;
-  local string mutClassName;
-
-  serverDescription = class'GameInfo'.static.ParseOption(_options, OPT_ServerDescription);
-  if (serverDescription == "")
-    return;
-    
+     
   gameInterface = self.WorldInfo.Game.GameInterface;
   if (gameInterface == None)
     return;
@@ -45,14 +45,61 @@ function UpdateGameSettings()
   if (gameSettings == None)
     return;
   
+  UpdateServerDescription(gameSettings);
+  UpdateMutatorList(gameSettings);
+
+  gameInterface.UpdateOnlineGame(self.WorldInfo.Game.PlayerReplicationInfoClass.default.SessionName, gameSettings);
+}
+
+function UpdateServerDescription(OnlineGameSettings gameSettings)
+{
+  local string serverDescription;
+
+  serverDescription = class'GameInfo'.static.ParseOption(_options, OPT_ServerDescription);
+  if (serverDescription == "")
+    return;
+
   // Some special chars cannot be used in the description, because they break the URL parsing and map travelling
   // There is nothing this mutator can do about it, because parsing already happenes before the mut is initialized
   // Known to cause issues : / # &
-  serverDescription = repl(serverDescription, "_", " "); 
-  if (serverDescription != "")
-    gameSettings.SetStringProperty(PROPERTY_SERVERDESCRIPTION, serverDescription);
+  // To allow special characters, spaces can be encoded as _ and other chars using URL-encoding as % followed by 2 hex digits
+  serverDescription = repl(serverDescription, "_", " ");
+  serverDescription = UrlDecode(serverDescription);
 
-  // update mutator list (currently stuck at whatever muts were active when the server launched)
+  gameSettings.SetStringProperty(PROPERTY_SERVERDESCRIPTION, serverDescription);
+}
+
+function string UrlDecode(string encoded)
+{
+  local int i, d1, d2;
+  local string c, decoded;
+
+  for (i=0; i<len(encoded)-2; i++)
+  {
+    c = mid(encoded, i, 1);
+    if (c == "%")
+    {
+      d1 = instr("0123456789ABCDEF", caps(mid(encoded, i+1, 1)));
+      d2 = instr("0123456789ABCDEF", caps(mid(encoded, i+2, 1)));
+      if (d1 >= 0 && d2 >= 0)
+      {
+        decoded = decoded $ chr(d1*16 + d2);
+        i += 2;
+        continue;
+      }
+    }
+    decoded = decoded $ c;
+  }
+  return decoded $ mid(encoded, i);
+}
+
+function UpdateMutatorList(OnlineGameSettings gameSettings)
+{
+  local string sep, muts, mutClassName;
+  local Mutator mut;
+  local CRZUIDataProvider_Mutator mutInfo;
+  local Object obj;
+
   sep = "";
   for (mut = self.WorldInfo.Game.BaseMutator; mut != none; mut = mut.NextMutator)
   {
@@ -73,8 +120,4 @@ function UpdateGameSettings()
     //  `log("No mutator info for " $ mutClassName);
   }
   gameSettings.SetStringProperty(1073741828, muts);
-
-  // force update
-  gameInterface.UpdateOnlineGame(self.WorldInfo.Game.PlayerReplicationInfoClass.default.SessionName, gameSettings);
 }
-
