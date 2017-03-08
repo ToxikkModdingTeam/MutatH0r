@@ -73,5 +73,8 @@ function UpdateGameSettings()
     //  `log("No mutator info for " $ mutClassName);
   }
   gameSettings.SetStringProperty(1073741828, muts);
+
+  // force update
+  gameInterface.UpdateOnlineGame(self.WorldInfo.Game.PlayerReplicationInfoClass.default.SessionName, gameSettings);
 }
 
