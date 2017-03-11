@@ -18,6 +18,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
   if (default.GameSpeed == 0)
     default.GameSpeed = 1.0;
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_FasterForward');
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Game Speed %", "Change the gamespeed [100%]", 50, 350, 1, default.GameSpeed * 100, OnSliderChanged);
 }
@@ -29,7 +30,7 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
 }
 
 
-//defaultproperties
-//{
-	//GroupNames[0]="GAMESPEED"
-//}
+defaultproperties
+{
+//	GroupNames[0]="GAMESPEED"
+}

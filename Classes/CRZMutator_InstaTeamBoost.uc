@@ -55,8 +55,8 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_InstaTeamBoost');
-
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Pull/Push force", "pull (-) or push (+) your team mates with a hit", -350, 350, 10, int (default.HitMomentum/1000), OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Team Damage", "Damage dealt when hitting your team mates", 0, 100, 5, default.TeamDamage, OnSliderChanged);
 }
@@ -73,7 +73,7 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
 
 defaultproperties
 {
-  GroupNames(0)="FRIENDLYFIRE"
+//  GroupNames(0)="FRIENDLYFIRE"
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true 
 }

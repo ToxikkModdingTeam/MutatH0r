@@ -34,7 +34,9 @@ simulated function InitPreset(SuperStingrayConfig preset)
 
 DefaultProperties
 {
-  GroupNames[0]="WEAPONMOD"
-  GroupNames[1]="WEAPONRESPAWN"
-  GroupNames[2]="STEALTH"
+//  GroupNames[0]="WEAPONMOD"
+//  GroupNames[1]="WEAPONRESPAWN"
+//  GroupNames[2]="STEALTH"
+//  GroupNames[3]="GAMESPEED"
+//  GroupNames[4]="STINGRAY"
 }

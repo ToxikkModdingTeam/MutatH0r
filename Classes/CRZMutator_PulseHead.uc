@@ -129,5 +129,5 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
-  GroupNames[0]="HEADSIZE";
+//  GroupNames[0]="HEADSIZE";
 }

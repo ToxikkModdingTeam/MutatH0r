@@ -32,5 +32,5 @@ function Timer()
 
 defaultproperties
 {
-	GroupNames[0]="HEADSIZE";
+//	GroupNames[0]="HEADSIZE";
 }

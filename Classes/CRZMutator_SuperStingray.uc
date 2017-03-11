@@ -495,5 +495,5 @@ defaultproperties
   //LevitationSelf=50
   //LevitationOthers=100
   //SelfDamageFactor=0
-  GroupNames[0]="STINGRAY"
+//  GroupNames[0]="STINGRAY"
 }

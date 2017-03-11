@@ -11,72 +11,111 @@ var config float TickInterval;
 
 // health regen/decay
 
-/** if a Pawn's health is below this limit, it will be increased by HealthRegenAmount */
-var config int HealthRegenLimit;
+var config int HealthMax;
 
-/** Amount of health received per tick, when health is below HealthRegenLimit */
+var config int HealthRegenLimit;
 var config int HealthRegenAmount;
 
-/** if a Pawn's health is above this limit, it will be reduced by HealthDecayUpperAmount */
 var config int HealthDecayUpperLimit;
-
-/** Amount of health lost per tick, when health is above HealthDecayUpperLimit */
 var config int HealthDecayUpperAmount;
-
-/** if a Pawn's health is above this limit, it will be reduced by HealthDecayLowerAmount */
 var config int HealthDecayLowerLimit;
-
-/** Amount of health lost per tick, when health is above HealthDecayLowerLimit */
 var config int HealthDecayLowerAmount;
 
 // armor regen / decay
 
-/** if a Pawn's armor is below this limit, it will be increased by ArmorRegenAmount */
-var config int ArmorRegenLimit;
+var config int ArmorMax;
 
-/** Amount of Armor received per tick */
+var config int ArmorRegenLimit;
 var config int ArmorRegenAmount;
 
-/** if a Pawn's armor is above this limit, it will be reduced by ArmorDecayLowerAmount */
-var config int ArmorDecayLimit;
-
-/** Amount of Armor lost per tick */
-var config int ArmorDecayAmount;
+var config int ArmorDecayUpperLimit;
+var config int ArmorDecayUpperAmount;
+var config int ArmorDecayLowerLimit;
+var config int ArmorDecayLowerAmount;
 
 
 function InitMutator(string Options, out string ErrorMessage)
 {
 	Super.InitMutator(Options, ErrorMessage);
 
-	if (HealthRegenAmount > 0 || HealthDecayLowerAmount > 0 || HealthDecayUpperAmount > 0 || ArmorRegenAmount > 0 || ArmorDecayAmount > 0)
-		SetTimer(TickInterval, true);
+	if (HealthMax != class'CRZPawn'.default.SuperHealthMax
+	  || HealthDecayUpperAmount != HealthDecayLowerAmount || HealthDecayLowerAmount != class'CRZPawn'.default.HealthDecayAmount
+	  || HealthDecayUpperLimit != HealthDecayLowerLimit || HealthDecayLowerLimit != class'CRZPawn'.default.HealthDecayLimit  
+	  || ArmorDecayUpperAmount != ArmorDecayLowerAmount || ArmorDecayLowerAmount != class'CRZPawn'.default.ShieldDecayAmount
+	  || ArmorDecayUpperLimit != ArmorDecayLowerLimit || ArmorDecayLowerLimit != class 'CRZPawn'.default.ShieldDecayLimit)
+	{
+    SetTickGroup(TG_PreAsyncWork);
+    Enable('Tick');
+	}
+
+	if (HealthRegenAmount > 0 || ArmorRegenAmount > 0)
+		SetTimer(TickInterval, true, 'Regen');
 }
 
-function Timer()
+simulated function PostBeginPlay()
 {
-	local UTPawn P;
+  local CRZArmorPickupFactory apf;
+
+  super.PostBeginPlay();
+
+  foreach WorldInfo.AllActors(class'CRZArmorPickupFactory', apf)
+  {
+    apf.MaxShieldAmount = ArmorMax;
+  }	
+}
+
+
+simulated function Tick(float deltaTime)
+{
+	local CRZPawn P;
+
+	foreach WorldInfo.AllPawns(class'CRZPawn', P)
+	{
+    P.SuperHealthMax = Max(HealthMax, 100);
+   
+		// health decay
+		if (P.Health > HealthDecayUpperLimit && HealthDecayUpperAmount > 0)
+		{
+      P.HealthDecayAmount = HealthDecayUpperAmount;
+      P.HealthDecayLimit = HealthDecayUpperLimit;
+		}
+		else
+		{
+      P.HealthDecayAmount = HealthDecayLowerAmount;
+      P.HealthDecayLimit = HealthDecayLowerLimit;
+      if (P.Health > HealthDecayLowerLimit) // start decay timer
+        P.SetHealth(P.Health);
+		}
+
+		// armor decay
+		if (P.VestArmor > ArmorDecayUpperLimit && ArmorDecayUpperAmount > 0)
+		{
+      P.ShieldDecayAmount = ArmorDecayUpperAmount;
+      P.ShieldDecayLimit = ArmorDecayUpperLimit;
+		}
+		else
+		{
+      P.ShieldDecayAmount = ArmorDecayLowerAmount;
+      P.ShieldDecayLimit = ArmorDecayLowerLimit;
+      if (P.VestArmor > ArmorDecayLowerLimit) // start decay timer
+        P.SetArmor(P.VestArmor);
+		}
+	}
+}
+
+function Regen()
+{
+	local CRZPawn P;
 		
-	foreach WorldInfo.AllPawns(class'UTPawn', P)
+	foreach WorldInfo.AllPawns(class'CRZPawn', P)
 	{
 		// health regen
 		if (HealthRegenAmount > 0 && P.Health < HealthRegenLimit)
 			P.Health = Min(P.Health + HealthRegenAmount, HealthRegenLimit);
 		
-		// health decay
-		if (HealthDecayUpperAmount > 0 && P.Health > HealthDecayUpperLimit)
-			P.Health = Max(P.Health - HealthDecayUpperAmount, HealthDecayUpperLimit - HealthDecayLowerAmount);
-		else if (HealthDecayLowerAmount > 0 && P.Health > HealthDecayLowerLimit)
-			P.Health = Max(P.Health - HealthDecayLowerAmount, HealthDecayLowerLimit);
-		if (P.Health <= 0)
-			P.Died(None, class'DmgType_Crushed', vect(0,0,0));
-
 		// armor regen
 		if (ArmorRegenAmount > 0 && P.VestArmor < ArmorRegenLimit)
-			P.VestArmor = Min(P.VestArmor + ArmorRegenAmount, ArmorRegenLimit);
-		
-		// armor decay
-		if (ArmorDecayAmount > 0 && P.VestArmor > ArmorDecayLimit)
-			P.VestArmor = Max(P.VestArmor - ArmorDecayAmount, ArmorDecayLimit);
+			P.VestArmor = Min(P.VestArmor + ArmorRegenAmount, ArmorRegenLimit);	
 	}
 }
 
@@ -85,34 +124,42 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
 	super.PopulateConfigView(ConfigView, MutatorDataProvider);
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_RegenDecay');
-
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Rate", "Health received per second from auto regeneration", 0.0, 10.0, 1.0, default.HealthRegenAmount, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Limit", "Maximum health from auto regeneration", 0.0, 200.0, 5.0, default.HealthRegenLimit, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #1", "Health lost per second when above limit #1", 0.0, 10.0, 1.0, default.HealthDecayUpperAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Health Maximum", "Maximum health", 100.0, 200.0, 5.0, default.HealthMax, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Limit #1", "Health above this value will be reduced by Rate #1", 0.0, 200.0, 5.0, default.HealthDecayUpperLimit, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #2", "Health lost per second when above limit #2", 0.0, 10.0, 1.0, default.HealthDecayLowerAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #1", "Health lost per second when above limit #1", 0.0, 25.0, 1.0, default.HealthDecayUpperAmount, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Limit #2", "Health above this value will be reduced by Rate #2", 0.0, 200.0, 5.0, default.HealthDecayLowerLimit, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Regen Rate", "Armor received per second from auto regeneration", 0.0, 10.0, 1.0, default.ArmorRegenAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Decay Rate #2", "Health lost per second when above limit #2", 0.0, 25.0, 1.0, default.HealthDecayLowerAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Limit", "Maximum health from auto regeneration", 0.0, 200.0, 5.0, default.HealthRegenLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "H. Regen Rate", "Health received per second from auto regeneration", 0.0, 25.0, 1.0, default.HealthRegenAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "Armor Maximum", "Maximum armor", 0.0, 200.0, 5.0, default.ArmorMax, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Limit #1", "Armor above this value will be reduced by Rate #1", 0.0, 200.0, 5.0, default.ArmorDecayUpperLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Rate #1", "Armor lost per second when above Limit #1", 0.0, 25.0, 1.0, default.ArmorDecayUpperAmount, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Limit #2", "Armor above this value will be reduced by Rate #1", 0.0, 200.0, 5.0, default.ArmorDecayLowerLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Rate #2", "Armor lost per second when above Limit #1", 0.0, 25.0, 1.0, default.ArmorDecayLowerAmount, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Regen Limit", "Maximum armor from auto regeneration", 0.0, 200.0, 5.0, default.ArmorRegenLimit, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Rate", "Armor lost per second when above Limit", 0.0, 10.0, 1.0, default.ArmorDecayAmount, OnSliderChanged);
-  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Decay Limit", "Armor above this value will be reduced at the given Rate", 0.0, 200.0, 5.0, default.ArmorDecayLimit, OnSliderChanged);
+  class'MutConfigHelper'.static.AddSlider(ConfigView, "A. Regen Rate", "Armor received per second from auto regeneration", 0.0, 25.0, 1.0, default.ArmorRegenAmount, OnSliderChanged);
 }
 
 function static OnSliderChanged(string label, float value, GFxClikWidget.EventData ev)
 {
   switch(label)
   {
+    case "Health Maximum": default.HealthMax = value; break;
     case "H. Regen Rate": default.HealthRegenAmount = value; break;
     case "H. Regen Limit": default.HealthRegenLimit = value; break;
     case "H. Decay Rate #1": default.HealthDecayUpperAmount = value; break;
     case "H. Decay Limit #1": default.HealthDecayUpperLimit = value; break;
     case "H. Decay Rate #2": default.HealthDecayLowerAmount = value; break;
     case "H. Decay Limit #2": default.HealthDecayLowerLimit = value; break;
+    case "Armor Maximum": default.ArmorMax = value; break;
     case "A. Regen Rate": default.ArmorRegenAmount = value; break;
     case "A. Regen Limit": default.ArmorRegenLimit = value; break;
-    case "A. Decay Rate": default.ArmorDecayAmount = value; break;
-    case "A. Decay Limit": default.ArmorDecayLimit = value; break;
+    case "A. Decay Rate #1": default.ArmorDecayUpperAmount = value; break;
+    case "A. Decay Limit #1": default.ArmorDecayUpperLimit = value; break;
+    case "A. Decay Rate #2": default.ArmorDecayLowerAmount = value; break;
+    case "A. Decay Limit #2": default.ArmorDecayLowerLimit = value; break;
   }
 	StaticSaveConfig();
 }

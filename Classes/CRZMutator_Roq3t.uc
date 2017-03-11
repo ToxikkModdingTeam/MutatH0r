@@ -312,12 +312,11 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
   local Roq3tConfig preset;
 
-  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
-
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
-  preset = new(none, "Preset1") class'Roq3tConfig';
-  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Roq3t');
 
+  preset = new(none, "Preset1") class'Roq3tConfig';
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
+  class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Roq3t');
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Rocket Speed", "Speed of the rocket projectile [1800]", 500, 7500, 50, preset.Speed, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force pushing players away from point of impact [80]", 0, 200, 1, preset.Knockback / 1000, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "KB Factor Self", "Knockback factor when rocket-jumping [100%]", 0, 200, 1, preset.KnockbackFactorSelf * 100, OnSliderChanged);
@@ -376,5 +375,5 @@ defaultproperties
   bAllowDisableTick=true
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
-  GroupNames[0]="CERBERUS"
+//  GroupNames[0]="CERBERUS"
 }

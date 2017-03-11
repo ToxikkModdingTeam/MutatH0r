@@ -1,7 +1,7 @@
 // MutatH0r.CRZMutator_ServerDescription
 // ----------------
 // * updates the server description from the options URL "?ServerDescription=..." value, 
-//   so it can be changed through the map/mutator voting system
+//   so it can be changed through the map/mutator voting system. supports $xx to escape hex chars
 // * updates the announced mutator names (they are stuck to the server startup muts)
 //
 // by PredatH0r
@@ -27,9 +27,9 @@ function InitMutator(string options, out string error)
   //`log("URL-Decode: a:" $ UrlDecode("a"));
   //`log("URL-Decode: ab:" $ UrlDecode("ab"));
   //`log("URL-Decode: abc:" $ UrlDecode("abc"));
-  //`log("URL-Decode: ?:" $ UrlDecode("%3F"));
-  //`log("URL-Decode: x?y:" $ UrlDecode("x%3Fy"));
-  //`log("URL-Decode: %a:" $ UrlDecode("%a")); // invalid encoding
+  //`log("URL-Decode: ?:" $ UrlDecode("$3F"));
+  //`log("URL-Decode: x?y:" $ UrlDecode("x$3Fy"));
+  //`log("URL-Decode: $a:" $ UrlDecode("$a")); // invalid encoding
 }
 
 function UpdateGameSettings()
@@ -61,7 +61,7 @@ function UpdateServerDescription(OnlineGameSettings gameSettings)
 
   // Some special chars cannot be used in the description, because they break the URL parsing and map travelling
   // There is nothing this mutator can do about it, because parsing already happenes before the mut is initialized
-  // Known to cause issues : / # &
+  // Known to cause issues : / # & %
   // To allow special characters, spaces can be encoded as _ and other chars using URL-encoding as % followed by 2 hex digits
   serverDescription = repl(serverDescription, "_", " ");
   serverDescription = UrlDecode(serverDescription);
@@ -77,7 +77,7 @@ function string UrlDecode(string encoded)
   for (i=0; i<len(encoded)-2; i++)
   {
     c = mid(encoded, i, 1);
-    if (c == "%")
+    if (c == "$")
     {
       d1 = instr("0123456789ABCDEF", caps(mid(encoded, i+1, 1)));
       d2 = instr("0123456789ABCDEF", caps(mid(encoded, i+2, 1)));

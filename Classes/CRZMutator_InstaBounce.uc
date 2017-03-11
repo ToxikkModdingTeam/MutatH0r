@@ -67,8 +67,8 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_InstaBounce');
-
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Knockback", "Force of the splash blast [85]", 0, 100, 1, default.KnockbackBall, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Splash Radius", "Radius of the splash blast [220]", 0, 300, 5, default.SplashRadius, OnSliderChanged);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Ball Fire Rate", "Time between firing two balls [500 millisec]", 100, 2000, 10, default.FireInterval * 10, OnSliderChanged);
@@ -87,8 +87,8 @@ defaultproperties
   bConfigWidgets=false // prevent SuperStingray from adding its widgets to the config screen
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
-  GroupNames[0]="WEAPONMOD"
-  GroupNames[1]="WEAPONRESPAWN"
-  GroupNames[2]="STEALTH"
-  GroupNames[3]="STINGRAY"
+//  GroupNames[0]="WEAPONMOD"
+//  GroupNames[1]="WEAPONRESPAWN"
+//  GroupNames[2]="STEALTH"
+//  GroupNames[3]="STINGRAY"
 }

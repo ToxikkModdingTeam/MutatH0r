@@ -87,6 +87,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 {
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
   
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Piledriver');
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Ram Into Ground", "Ram a player into the ground when you land on his head", default.StompIntoGround, OnCheckboxClick);
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Disable Weapon", "Disable a player's weapon when stuck in the ground", default.DisableWeapon, OnCheckboxClick);

@@ -259,6 +259,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
       killSoundIndex = i;
   }
 
+  ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_DmgPlume');
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Damage Numbers", "Size and appearance of damage numbers", 0, presetNames.Length - 1, 1, presetIndex, static.OnSliderChanged, DataProviderPlumes);
   class'MutConfigHelper'.static.AddSlider(ConfigView, "Kill Sound", "Sound played when you kill a player", 0, class'DmgPlumeActor'.default.KillSounds.Length - 1, 1, killSoundIndex, static.OnSliderChanged, DataProviderKillSounds);
