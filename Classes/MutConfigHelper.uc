@@ -14,10 +14,13 @@ struct SliderEventData
 
 struct SliderMapping
 {
+  var CRZSliderWidget widget;
+  var GfxObject dataProvider;
   var string sliderName;
   var delegate<SliderEventListener> listener;
   var string label;
-  var bool firstEventSkipped;
+  var float min,max,snap,value;
+  var bool initialized;
 };
 
 struct CheckboxMapping
@@ -33,6 +36,12 @@ var private array<CheckboxMapping> checkboxes;
 
 static delegate SliderEventListener(string label, float value, GFxClikWidget.EventData data);
 static delegate CheckBoxEventListener(string label, bool value, GFxClikWidget.EventData data);
+
+function PostBeginPlay()
+{
+  super.PostBeginPlay();
+  SetTickGroup(TG_PreAsyncWork);
+}
 
 public static function NotifyPopulated(class classRef)
 {  
@@ -57,30 +66,67 @@ private static function MutConfigHelper GetHelper()
 
 public static function CRZSliderWidget AddSlider(GFxCRZFrontEnd_ModularView ConfigView, string label, string descr, float min, float max, float snap, float val, delegate<SliderEventListener> listener, optional GfxObject dataProvider)
 {
-  local CRZSliderWidget Slider; 
+  local CRZSliderWidget slider; 
   local MutConfigHelper helper;
 
-  Slider = ConfigView.AddSlider(ConfigView.ListObject1, "CRZSlider", label, descr);
-  if (dataProvider != None)
-    slider.SetObject("dataProvider", dataProvider);
-  Slider.SetFloat("minimum", min);
-  Slider.SetFloat("maximum", max);
-  Slider.SetSnapInterval(snap);
-  Slider.SetFloat("value", FClamp(val, min, max));	
-  Slider.AddEventListener('CLIK_change', OnSliderChanged);
+  slider = ConfigView.AddSlider(ConfigView.ListObject1, "CRZSlider", label, descr);
   
   helper = GetHelper();
-  helper.AddSliderToList(slider.GetString("_name"), label, listener);
+  helper.AddSliderToList(slider, label, min, max, snap, val, listener, dataProvider);
   return Slider;
 }
 
-private function AddSliderToList(string sliderName, string label, delegate<SliderEventListener> listener)
+private function AddSliderToList(CRZSliderWidget slider, string label, float min, float max, float snap, float val, delegate<SliderEventListener> listener, GfxObject dataProvider)
 {
   Sliders.Add(1);
-  Sliders[Sliders.Length-1].SliderName = sliderName;
+  Sliders[Sliders.Length-1].Widget = slider;
+  Sliders[Sliders.Length-1].SliderName = slider.GetString("_name");
+  Sliders[Sliders.Length-1].DataProvider = dataProvider;
   Sliders[Sliders.Length-1].Label = label;
   Sliders[Sliders.Length-1].Listener = listener;
-  sliders[sliders.length-1].firstEventSkipped = false;
+  sliders[sliders.length-1].min = min;
+  sliders[sliders.length-1].max = max;
+  sliders[sliders.length-1].snap = snap;
+  sliders[sliders.length-1].value = val;
+  sliders[sliders.length-1].initialized = false;
+
+  // delay init of the slider for 1 Tick to fix issues with incorrect change notifications and wrong dataProvider value
+  GotoState('InitPending');
+}
+
+function Tick(float deltaTime)
+{
+}
+
+state InitPending 
+{
+  function Tick(float deltaTime)
+  {
+    local int i;
+    local SliderMapping slider;
+
+    for (i=0; i<Sliders.Length; i++)
+    {
+      slider = Sliders[i];
+      if (slider.initialized)
+        continue;
+      if (slider.dataProvider != none)
+        slider.widget.SetObject("dataProvider", slider.dataProvider);
+      else
+      {
+        slider.widget.SetFloat("minimum", slider.min);
+        slider.widget.SetFloat("maximum", slider.max);
+        slider.widget.SetSnapInterval(slider.snap);
+      }
+      slider.widget.SetFloat("value", FClamp(slider.value, slider.min, slider.max));
+      slider.widget.AddEventListener('CLIK_change', OnSliderChanged);
+      slider.initialized = true;
+    }
+    GotoState('');
+    Disable('Tick');
+  }
+Begin:
+  Enable('Tick');
 }
 
 private static function OnSliderChanged(GFxClikWidget.EventData eventData)
@@ -96,13 +142,8 @@ private static function OnSliderChanged(GFxClikWidget.EventData eventData)
     sliderName = eventData.Target.GetString("_name");
     if (helper.sliders[i].sliderName == sliderName)
     {
-      if (helper.sliders[i].firstEventSkipped)
-      {
-        listener = helper.sliders[i].listener; // syntactially required BS
-        listener(helper.sliders[i].label, eventData.target.GetFloat("value"), eventData);
-      }
-      else
-        helper.sliders[i].firstEventSkipped = true;
+      listener = helper.sliders[i].listener; // syntactially required BS
+      listener(helper.sliders[i].label, eventData.target.GetFloat("value"), eventData);
       return;
     }
   }
@@ -123,7 +164,7 @@ public static function GfxClikWidget AddCheckBox(GFxCRZFrontEnd_ModularView Conf
   return checkBox;
 }
 
-private function AddCheckBoxToList(string checkboxName, string label, delegate<SliderEventListener> listener)
+private function AddCheckBoxToList(string checkboxName, string label, delegate<CheckBoxEventListener> listener)
 {
   checkboxes.Add(1);
   checkboxes[checkboxes.Length-1].Name = checkboxName;
