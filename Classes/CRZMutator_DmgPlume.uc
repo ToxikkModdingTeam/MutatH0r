@@ -74,29 +74,36 @@ function MoveMyselfToHeadOfMutatorList()
 function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller InstigatedBy, Vector HitLocation, out Vector Momentum, class<DamageType> DamageType, Actor DamageCauser)
 {
   local int i, j;
-  local PlayerController pc;
+  local CRZPlayerController pc;
   
   super.NetDamage(OriginalDamage, Damage, Injured, InstigatedBy, HitLocation, Momentum, DamageType, DamageCauser);
 
-  pc = PlayerController(InstigatedBy);
-  if (pc == none)
-    return;
-
-  i = GetOrAddPlumeReceiver(InstigatedBy);
-
-  // find or create plume for victim and aggregate damage
-  for (j=0; j<PlumeReceivers[i].Victims.Length; j++)
+  foreach WorldInfo.AllControllers(class'CRZPlayerController', PC)
   {
-    if (PlumeReceivers[i].Victims[j].Victim == Injured)
-      break;
+    if (!HasPovOfAttacker(PC, InstigatedBy))
+      continue;
+
+    i = GetOrAddPlumeReceiver(pc);
+
+    // find or create plume for victim and aggregate damage
+    for (j=0; j<PlumeReceivers[i].Victims.Length; j++)
+    {
+      if (PlumeReceivers[i].Victims[j].Victim == Injured)
+        break;
+    }
+    if (j>=PlumeReceivers[i].Victims.Length)
+    {
+      PlumeReceivers[i].Victims.Add(1);
+      PlumeReceivers[i].Victims[j].Victim = Injured;
+      PlumeReceivers[i].Victims[j].RepItem.Location = Injured.Location + vect(0,0,1)*(Injured.CylinderComponent.CollisionHeight + 3);
+    }
+    PlumeReceivers[i].Victims[j].RepItem.Value += pc.Pawn == None ? Damage : round(Damage * pc.Pawn.DamageScaling); // attacker may have died before his projectile deals damage
   }
-  if (j>=PlumeReceivers[i].Victims.Length)
-  {
-    PlumeReceivers[i].Victims.Add(1);
-    PlumeReceivers[i].Victims[j].Victim = Injured;
-    PlumeReceivers[i].Victims[j].RepItem.Location = Injured.Location + vect(0,0,1)*(Injured.CylinderComponent.CollisionHeight + 3);
-  }
-  PlumeReceivers[i].Victims[j].RepItem.Value += pc.Pawn == None ? Damage : round(Damage * pc.Pawn.DamageScaling); // attacker may have died before his projectile deals damage
+}
+
+function bool HasPovOfAttacker(CRZPlayerController player, Controller attacker)
+{
+  return player.RealViewTarget == none ? (player == attacker) : (player.RealViewTarget == attacker.PlayerReplicationInfo);
 }
 
 function Tick(float deltaTime)
@@ -188,12 +195,18 @@ function NotifyLogout(Controller C)
 function ScoreKill (Controller killer, Controller killed)
 {
   local int i;
+  local CRZPlayerController pc;
 
   super.ScoreKill(killer, killed);
 
-  if (killer != killed && PlayerController(killer) != none)
+  if (killer == none || killer == killed)
+    return;
+
+  foreach WorldInfo.AllControllers(class'CRZPlayerController', PC)
   {
-    i = GetOrAddPlumeReceiver(killer);
+    if (!HasPovOfAttacker(pc, killer))
+      continue;
+    i = GetOrAddPlumeReceiver(pc);
     PlumeReceivers[i].Actor.PlayKillSound();
   }
 }
@@ -288,4 +301,8 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
     class'DmgPlumeActor'.default.KillSoundVolume = value/100;
 
   class'DmgPlumeActor'.static.StaticSaveConfig();
+}
+
+defaultproperties
+{
 }

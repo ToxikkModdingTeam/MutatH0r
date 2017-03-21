@@ -14,13 +14,9 @@ struct SliderEventData
 
 struct SliderMapping
 {
-  var CRZSliderWidget widget;
-  var GfxObject dataProvider;
   var string sliderName;
   var delegate<SliderEventListener> listener;
   var string label;
-  var float min,max,snap,value;
-  var bool initialized;
 };
 
 struct CheckboxMapping
@@ -79,54 +75,20 @@ public static function CRZSliderWidget AddSlider(GFxCRZFrontEnd_ModularView Conf
 private function AddSliderToList(CRZSliderWidget slider, string label, float min, float max, float snap, float val, delegate<SliderEventListener> listener, GfxObject dataProvider)
 {
   Sliders.Add(1);
-  Sliders[Sliders.Length-1].Widget = slider;
   Sliders[Sliders.Length-1].SliderName = slider.GetString("_name");
-  Sliders[Sliders.Length-1].DataProvider = dataProvider;
   Sliders[Sliders.Length-1].Label = label;
   Sliders[Sliders.Length-1].Listener = listener;
-  sliders[sliders.length-1].min = min;
-  sliders[sliders.length-1].max = max;
-  sliders[sliders.length-1].snap = snap;
-  sliders[sliders.length-1].value = val;
-  sliders[sliders.length-1].initialized = false;
 
-  // delay init of the slider for 1 Tick to fix issues with incorrect change notifications and wrong dataProvider value
-  GotoState('InitPending');
-}
-
-function Tick(float deltaTime)
-{
-}
-
-state InitPending 
-{
-  function Tick(float deltaTime)
+  if (dataProvider != none)
+    slider.SetObject("dataProvider", dataProvider);
+  else
   {
-    local int i;
-    local SliderMapping slider;
-
-    for (i=0; i<Sliders.Length; i++)
-    {
-      slider = Sliders[i];
-      if (slider.initialized)
-        continue;
-      if (slider.dataProvider != none)
-        slider.widget.SetObject("dataProvider", slider.dataProvider);
-      else
-      {
-        slider.widget.SetFloat("minimum", slider.min);
-        slider.widget.SetFloat("maximum", slider.max);
-        slider.widget.SetSnapInterval(slider.snap);
-      }
-      slider.widget.SetFloat("value", FClamp(slider.value, slider.min, slider.max));
-      slider.widget.AddEventListener('CLIK_change', OnSliderChanged);
-      slider.initialized = true;
-    }
-    GotoState('');
-    Disable('Tick');
+    slider.SetFloat("minimum", min);
+    slider.SetFloat("maximum", max);
+    slider.SetSnapInterval(snap);
   }
-Begin:
-  Enable('Tick');
+  slider.SetFloat("value", FClamp(val, min, max));
+  slider.AddEventListener('CLIK_change', OnSliderChanged);
 }
 
 private static function OnSliderChanged(GFxClikWidget.EventData eventData)
