@@ -135,23 +135,15 @@ exec function Plumes(optional string preset)
     {
       if (msg != "") msg = msg $ ", ";
       iniPreset = repl(locs(names[i]), " dmgplumeconfig", "");
-      msg = msg $ "<font color=\"" $ (((Owner.bDisablePlumes && iniPreset == "off") || (iniPreset == Owner.DmgPlumeConfig)) ? "#ffff00" : "#00ffff") $ "\">" $ iniPreset $ "</font>";
+      msg = msg $ "<font color=\"" $ ( (iniPreset == Owner.DmgPlumeConfig) ? "#ffff00" : "#00ffff") $ "\">" $ iniPreset $ "</font>";
     }
 
     PC.ClientMessage("Usage: <font color=\"#ffff00\">plumes </font>&lt;<font color=\"#00ffff\">preset</font>&gt; with one of these presets: " $ msg);
   }
   else
   {
-    if (preset == "off")
-    {
-      Owner.bDisablePlumes = true;
+    if (Owner.LoadPreset(preset))
       Owner.SaveConfig();
-    }
-    else if (Owner.LoadPreset(preset))
-    {
-      Owner.bDisablePlumes = false;
-      Owner.SaveConfig();
-    }
     else
       PC.ClientMessage("Plumes: unknown preset: " $ preset);
   }    
@@ -206,7 +198,7 @@ event PostRender(Canvas canvas)
   if (Owner == None) // actor destroyed when match is over
     return;
 
-  if (!Owner.bDisablePlumes)
+  if (Owner.Settings != none)
     RenderDamagePlumes(canvas);
   //if (!Owner.bDisableCrosshairNames)
   //  RenderCrosshairName(canvas);
@@ -313,11 +305,11 @@ function RenderTypingIcons(Canvas canvas)
       DrawChatIconForPlayer(pawn, start, canvas);
     else
     {
-      for (i=0; i<Owner.areTyping.Length; i++)
+      for (i=0; i<Owner.typingPlayers.Length; i++)
       {
-        if (owner.areTyping[i].PlayerId != playerId)
+        if (owner.typingPlayers[i].PlayerId != playerId)
           continue;
-        if (owner.areTyping[i].bTyping)
+        if (owner.typingPlayers[i].bTyping)
           DrawChatIconForPlayer(pawn, start, canvas);
         break;
       }

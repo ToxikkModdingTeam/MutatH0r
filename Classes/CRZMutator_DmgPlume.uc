@@ -23,14 +23,14 @@ struct PlumeVictimInfo
 
 struct PlumeReceiver
 {
-  var Controller Controller;
+  var CRZPlayerController Controller;
   var DmgPlumeActor Actor;
   var array<PlumeVictimInfo> Victims;
+  var bool PlumesEnabled;
 };
 
 
 // server
-var config string forceKillSound;
 var array<PlumeReceiver> PlumeReceivers;
 
 
@@ -84,6 +84,8 @@ function NetDamage(int OriginalDamage, out int Damage, Pawn Injured, Controller 
       continue;
 
     i = GetOrAddPlumeReceiver(pc);
+    if (!PlumeReceivers[i].PlumesEnabled)
+      continue;
 
     // find or create plume for victim and aggregate damage
     for (j=0; j<PlumeReceivers[i].Victims.Length; j++)
@@ -130,9 +132,12 @@ function Tick(float deltaTime)
   }
 }
 
-function int GetOrAddPlumeReceiver(Controller C)
+function int GetOrAddPlumeReceiver(CRZPlayerController C)
 {
   local int i;
+
+  if (C == none)
+    return -1;
 
   // find or create plume receiver
   for (i=0; i<PlumeReceivers.Length; i++)
@@ -150,22 +155,21 @@ function int GetOrAddPlumeReceiver(Controller C)
 
 function NotifyLogin(Controller C)
 {
-  local int i;
+  local CRZPlayerController pc;
+
   super.NotifyLogin(C);
 
-  if (PlayerController(C) != None)
-  {
-    i = GetOrAddPlumeReceiver(C);
-    if (i>=0 && forceKillSound != "")
-      PlumeReceivers[i].Actor.SetKillSound(forceKillSound);
-  }
+  // DmgPlumeActor must be intantiated on the client to know his typing status
+  pc = CRZPlayerController(C);
+  if (pc != None)
+    GetOrAddPlumeReceiver(pc);
 }
 
 function NotifyLogout(Controller C)
 {
   local int i, j, playerId;
 
-  if (PlayerController(C) != None)
+  if (CRZPlayerController(C) != None)
   {
     for (i=0; i<PlumeReceivers.Length; i++)
     {
@@ -178,7 +182,7 @@ function NotifyLogout(Controller C)
           for (j=0; j<PlumeReceivers.Length; j++)
           {
             if (PlumeReceivers[j].Controller != C)
-              PlumeReceivers[j].Actor.NotifyIsTyping(playerId, false);
+              PlumeReceivers[j].Actor.ClientNotifyIsTyping(playerId, false);
           }
         }
 
@@ -209,22 +213,6 @@ function ScoreKill (Controller killer, Controller killed)
     i = GetOrAddPlumeReceiver(pc);
     PlumeReceivers[i].Actor.PlayKillSound();
   }
-}
-
-function SetForceKillSound(string soundId)
-{
-  local int i;
-  forceKillSound = soundId;
-  for (i=0; i<plumeReceivers.Length; i++)
-    PlumeReceivers[i].Actor.SetKillSound(soundId, false);
-}
-
-function Mutate(string MutateString, PlayerController sender)
-{
-  if (instr(locs(MutateString), "forcekillsound") == 0)
-    SetForceKillsound(mid(MutateString, 15));
-  else
-    super.Mutate(MutateString, sender);
 }
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
