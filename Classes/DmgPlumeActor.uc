@@ -11,25 +11,16 @@ class DmgPlumeActor extends Actor dependson(CRZMutator_DmgPlume) config(MutatH0r
  *  
  */
 
-struct PlumeSpriteInfo
-{
-  var vector Location;
-  var int Value;
-  var float Age;
-  var float SpeedX;
-  var float SpeedY;
-};
-
 struct TypingInfo
 {
   var int PlayerId;
   var bool bTyping;
 };
 
-struct KillSoundInfo
+struct ResourceInfo
 {
   var string Label;
-  var string Wave;
+  var string Uri;
 };
 
 // server side
@@ -40,16 +31,14 @@ var CRZMutator_DmgPlume Mut;
 
 var config string DmgPlumeConfig;
 var config bool bDisableChatIcon;
-var config array<KillSoundInfo> KillSounds;
+var config array<ResourceInfo> PlumeFonts;
+var config array<ResourceInfo> KillSounds;
 var config string KillSound;
 var config float KillSoundVolume;
 
 var bool waitingForOwner;
 
-var DmgPlumeConfig Settings;
 var DmgPlumeInteraction PlumeInteraction;
-var array<PlumeSpriteInfo> Plumes;
-
 var SoundCue KillSoundCue;
 
 var bool isTyping; // last status of whether the owning player was typing (or had console open)
@@ -75,25 +64,17 @@ simulated function InitAfterReceivingOwner()
     return;
   }
 
-  // damage numbers
-  if (DmgPlumeConfig == "")
-    DmgPlumeConfig = "small";
-  if (!LoadPreset(DmgPlumeConfig))
-    LoadPreset("small");
-
   // kill sound
   if (KillSound == "") // no local .ini file
     KillSound = "$$$";
   SetKillSound(KillSound, false);
 
-  // HUD for damage numbers and chat icon
+  // HUD for chat icon
   AddToHUD();
 }
 
 simulated event Tick(float deltaTime)
 {
-  local int i;
-
   if (Owner == None)
     return;
 
@@ -108,16 +89,6 @@ simulated event Tick(float deltaTime)
 
   if (deltaTime < 0) // yep, quite often has -1
     return;
-
-  for (i=0; i<Plumes.Length; i++)
-  {
-    Plumes[i].Age += deltaTime;
-    if (Plumes[i].Age > Settings.TimeToLive)
-    {
-      Plumes.Remove(i, 1);
-      --i;
-    }
-  }
 }
 
 simulated function AddToHUD()
@@ -127,65 +98,6 @@ simulated function AddToHUD()
   PC = CRZPlayerController(Owner);
   if (CRZHud(PC.myHud) != None)
     PlumeInteraction = class'DmgPlumeInteraction'.static.Create(self, PC, true);
-}
-
-
-//==================================================
-// damage numbers
-//==================================================
-
-simulated function bool LoadPreset(string preset)
-{
-  local DmgPlumeConfig cfg;
-
-  if (preset ~= "off")
-  {
-    DmgPlumeConfig = "off";
-    Settings = none;
-    ServerSetPlumesEnabled(false);
-    return true;
-  }
-
-  preset = Locs(preset);
-  cfg = new(none, preset) class'DmgPlumeConfig';
-  if (cfg == None || cfg.PlumeColors.Length == 0)
-  {
-    // when the mutator was auto-downloaded from a server, then there is no local .ini to initialize the settings, so we set up some defaults
-    cfg = new class'DmgPlumeConfig';
-    if (!cfg.SetDefaults(preset))
-      return false;
-  }
-
-  DmgPlumeConfig = preset;
-  Settings = cfg;
-  ServerSetPlumesEnabled(true);
-  return true;
-}
-
-reliable server function ServerSetPlumesEnabled(bool enabled)
-{
-  local int i;
-  
-  i = Mut.GetOrAddPlumeReceiver(CRZPlayerController(Owner));
-  Mut.PlumeReceivers[i].PlumesEnabled = enabled;
-}
-
-unreliable client function AddPlumes(PlumeRepInfo repInfo)
-{
-  local int i;
-  local PlumeSpriteInfo plume;
-
-  for (i=0; i<ArrayCount(repInfo.Plumes); i++)
-  {
-    if (repInfo.Plumes[i].Value == 0)
-      break;
-
-    plume.Location = repInfo.Plumes[i].Location;
-    plume.Value = repInfo.Plumes[i].value;
-    plume.SpeedX = (frand() < 0.5 ? -1 : 1) * (frand() * Settings.SpeedX.Random + Settings.SpeedX.Fixed);
-    plume.SpeedY = frand()*Settings.SpeedY.Random + Settings.SpeedY.Fixed;
-    Plumes.AddItem(plume);
-  }
 }
 
 
@@ -203,9 +115,9 @@ simulated static function SoundCue GetKillSound(string label)
   {
     if (default.KillSounds[i].Label ~= label)
     {
-      if (default.KillSounds[i].Wave == "")
+      if (default.KillSounds[i].Uri == "")
         return none;
-      wave = SoundNodeWave(class'WorldInfo'.static.GetWorldInfo().DynamicLoadObject(default.KillSounds[i].Wave, class'SoundNodeWave'));
+      wave = SoundNodeWave(class'WorldInfo'.static.GetWorldInfo().DynamicLoadObject(default.KillSounds[i].Uri, class'SoundNodeWave'));
       if (wave == none)
         return none;
       cue = new class'SoundCue';

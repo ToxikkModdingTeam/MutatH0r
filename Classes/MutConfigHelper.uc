@@ -17,6 +17,7 @@ struct SliderMapping
   var string sliderName;
   var delegate<SliderEventListener> listener;
   var string label;
+  var CRZSliderWidget slider;
 };
 
 struct CheckboxMapping
@@ -26,12 +27,29 @@ struct CheckboxMapping
   var string label;
 };
 
+struct ObjectDictEntry
+{
+  var string key;
+  var object val;
+};
+
+struct StringDictEntry
+{
+  var string key;
+  var string val;
+};
+
 var private class clazz;
 var private array<SliderMapping> sliders;
 var private array<CheckboxMapping> checkboxes;
+var private array<ObjectDictEntry> objectDict;
+var private array<StringDictEntry> stringDict;
+var private delegate<TimerFunc> timerHandler;
 
 static delegate SliderEventListener(string label, float value, GFxClikWidget.EventData data);
 static delegate CheckBoxEventListener(string label, bool value, GFxClikWidget.EventData data);
+static delegate TimerFunc();
+
 
 function PostBeginPlay()
 {
@@ -46,9 +64,11 @@ public static function NotifyPopulated(class classRef)
   helper.clazz = classRef;
   helper.sliders.Length = 0;
   helper.checkboxes.Length = 0;
+  helper.stringDict.Length = 0;
+  helper.objectDict.Length = 0;
 }
 
-private static function MutConfigHelper GetHelper()
+public static function MutConfigHelper GetHelper()
 {
   local WorldInfo world;
   local MutConfigHelper helper;
@@ -72,12 +92,25 @@ public static function CRZSliderWidget AddSlider(GFxCRZFrontEnd_ModularView Conf
   return Slider;
 }
 
+public function SetSliderValue(string label, float value)
+{
+	local int i;
+	for (i=0; i<sliders.Length; i++)
+	{
+		if (sliders[i].label != label)
+			continue;
+		sliders[i].slider.SetFloat("value", value);
+		break;
+	}
+}
+
 private function AddSliderToList(CRZSliderWidget slider, string label, float min, float max, float snap, float val, delegate<SliderEventListener> listener, GfxObject dataProvider)
 {
   Sliders.Add(1);
   Sliders[Sliders.Length-1].SliderName = slider.GetString("_name");
   Sliders[Sliders.Length-1].Label = label;
   Sliders[Sliders.Length-1].Listener = listener;
+  Sliders[Sliders.Length-1].Slider = slider;
 
   if (dataProvider != none)
     slider.SetObject("dataProvider", dataProvider);
@@ -150,4 +183,80 @@ private static function OnCheckboxClicked(GFxClikWidget.EventData eventData)
       return;
     }
   }
+}
+
+// string and object dictionary functions to help mutator config screens escape the "static" trap
+
+public function string GetString(string key, optional string defaultValue)
+{
+  local int i;
+  for (i=0; i<stringDict.length; i++)
+  {
+    if (stringDict[i].key == key)
+      return stringDict[i].val;
+  }
+  return defaultValue;
+}
+
+public function SetString(string key, string value)
+{
+  local int i;
+  for (i=0; i<stringDict.length; i++)
+  {
+    if (stringDict[i].key == key)
+    {
+      stringDict[i].val = value;
+      return;
+    }
+  }
+  stringDict.length = stringDict.length+1;
+  stringDict[i].key = key;
+  stringDict[i].val = value;
+}
+
+public function object GetObject(string key, optional object defaultValue)
+{
+  local int i;
+  for (i=0; i<objectDict.length; i++)
+  {
+    if (objectDict[i].key == key)
+      return objectDict[i].val;
+  }
+  return defaultValue;
+}
+
+public function SetObject(string key, object value)
+{
+  local int i;
+  for (i=0; i<objectDict.length; i++)
+  {
+    if (objectDict[i].key == key)
+    {
+      objectDict[i].val = value;
+      return;
+    }
+  }
+  objectDict.length = objectDict.Length+1;
+  objectDict[i].key = key;
+  objectDict[i].val = value;
+}
+
+public function SetTimerFunc(float interval, delegate<TimerFunc> func, optional bool repeat)
+{
+  if (timerHandler != none)
+    ClearTimer('RelayTimer');
+  SetTimer(interval, repeat, 'RelayTimer');
+  timerHandler = func;
+}
+
+public function ClearTimerFunc(float interval, delegate<TimerFunc> func, optional bool repeat)
+{
+  ClearTimer('RelayTimer');
+  timerHandler = none;
+}
+
+function RelayTimer()
+{
+  if (timerHandler != none)
+    timerHandler();
 }

@@ -10,8 +10,6 @@ if "%1"=="compress" goto compress
 :build
 copy ..\Content\MutatH0r_Content.upk %TOXIKK%\UDKGame\Content >nul
 if errorlevel 1 goto error
-copy ..\..\ExtVoting\Content\*.upk %TOXIKK%\UDKGame\Content >nul
-if errorlevel 1 goto error
 %TOXIKK%\Binaries\Win32\TOXIKK.exe make -configsubdir=LocalBuild
 if errorlevel 1 goto error
 goto :eof
@@ -20,7 +18,6 @@ goto :eof
 cd %TOXIKK%\UDKGame\Script_LocalBuild
 if errorlevel 1 goto error
 %TOXIKK%\Binaries\Win32\TOXIKK.exe stripsource MutatH0r.u -configsubdir=LocalBuild
-%TOXIKK%\Binaries\Win32\TOXIKK.exe stripsource ExtVoting.u -configsubdir=LocalBuild
 if errorlevel 1 goto error
 goto :eof
 
