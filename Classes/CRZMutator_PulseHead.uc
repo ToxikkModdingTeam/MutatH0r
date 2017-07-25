@@ -130,4 +130,7 @@ defaultproperties
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
 //  GroupNames[0]="HEADSIZE";
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
 }

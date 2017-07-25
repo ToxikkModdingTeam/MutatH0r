@@ -76,4 +76,8 @@ defaultproperties
 //  GroupNames(0)="FRIENDLYFIRE"
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true 
+
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
 }

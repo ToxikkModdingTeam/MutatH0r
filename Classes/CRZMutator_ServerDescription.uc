@@ -7,7 +7,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_ServerDescription extends UTMutator config (MutatH0r);
+class CRZMutator_ServerDescription extends CRZMutator config (MutatH0r);
 
 `include(UTGame\Classes\UTOnlineConstants.uci)
 
@@ -120,4 +120,11 @@ function UpdateMutatorList(OnlineGameSettings gameSettings)
     //  `log("No mutator info for " $ mutClassName);
   }
   gameSettings.SetStringProperty(1073741828, muts);
+}
+
+defaultproperties
+{
+  bAllowMXPSave=true
+  bAllowSCSave=true
+  bRequiresDownloadOnClient=false
 }

@@ -161,6 +161,12 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
     case "A. Decay Rate #2": default.ArmorDecayLowerAmount = value; break;
     case "A. Decay Limit #2": default.ArmorDecayLowerLimit = value; break;
   }
-	StaticSaveConfig();
+  StaticSaveConfig();
 }
 
+defaultproperties
+{
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=false
+}

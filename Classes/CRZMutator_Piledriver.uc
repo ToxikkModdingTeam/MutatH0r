@@ -108,3 +108,10 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
   default.StompDamage = value;
   StaticSaveConfig();
 }
+
+defaultproperties
+{
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
+}

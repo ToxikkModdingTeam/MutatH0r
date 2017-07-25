@@ -219,6 +219,10 @@ defaultproperties
   BeamKnockbackVert=550
   ExtraUpSelf=50
 
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
+
 //  GroupNames[0]="WEAPONMOD"
 //  GroupNames[1]="WEAPONRESPAWN"
 //  GroupNames[2]="STINGRAY"

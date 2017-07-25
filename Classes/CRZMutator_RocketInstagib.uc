@@ -72,4 +72,8 @@ defaultproperties
   //GroupNames[0]="WEAPONMOD"
   //GroupNames[1]="WEAPONRESPAWN"
   //GroupNames[2]="STEALTH"
+
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
 }

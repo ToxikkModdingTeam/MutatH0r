@@ -376,4 +376,7 @@ defaultproperties
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
 //  GroupNames[0]="CERBERUS"
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
 }

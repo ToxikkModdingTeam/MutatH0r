@@ -87,6 +87,11 @@ defaultproperties
   bConfigWidgets=false // prevent SuperStingray from adding its widgets to the config screen
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
+
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
+
 //  GroupNames[0]="WEAPONMOD"
 //  GroupNames[1]="WEAPONRESPAWN"
 //  GroupNames[2]="STEALTH"

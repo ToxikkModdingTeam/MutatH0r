@@ -39,3 +39,10 @@ function static OnSliderChanged(string label, float value, GFxClikWidget.EventDa
   default.DamageHealingFactor = value / 100.0;
   StaticSaveConfig();
 }
+
+defaultproperties
+{
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=false
+}

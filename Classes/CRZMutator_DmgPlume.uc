@@ -125,4 +125,7 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 
 defaultproperties
 {
+  bAllowMXPSave=true
+  bAllowSCSave=true
+  bRequiresDownloadOnClient=true
 }

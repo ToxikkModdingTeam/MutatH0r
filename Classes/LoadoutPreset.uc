@@ -1,4 +1,4 @@
-class CRZMutator_LoadoutPreset extends Object config(MutatH0r) PerObjectConfig;
+class LoadoutPreset extends Object config(MutatH0r) PerObjectConfig;
 
 var config bool AllowWeaponPickups;
 var config bool InfiniteAmmo;

@@ -27,4 +27,7 @@ DefaultProperties
 {
   bAlwaysRelevant = true;
   RemoteRole = ROLE_SimulatedProxy;
+  bAllowMXPSave=true
+  bAllowSCSave=true
+  bRequiresDownloadOnClient=true
 }

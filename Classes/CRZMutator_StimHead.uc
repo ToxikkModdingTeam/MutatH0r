@@ -5,7 +5,7 @@
 // by PredatH0r
 //================================================================
 
-class CRZMutator_StimHead extends UTMutator config (MutatH0r);
+class CRZMutator_StimHead extends CRZMutator config (MutatH0r);
 
 
 var config float MinSize;
@@ -33,4 +33,7 @@ function Timer()
 defaultproperties
 {
 //	GroupNames[0]="HEADSIZE";
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=false
 }

@@ -17,7 +17,7 @@ class CRZMutator_Loadout extends CRZMutator config(MutatH0r);
 const OPT_LoadoutPreset = "LoadoutPreset";
 const OPT_Loadout = "Loadout";
 
-var CRZMutator_LoadoutPreset preset;
+var LoadoutPreset preset;
 var array<class<Weapon> > weapons;
 var bool InfiniteAmmo;
 var string RandomPresets;
@@ -52,7 +52,7 @@ function InitMutator(string options, out string error)
   s = class'GameInfo'.static.ParseOption(options, OPT_Loadout);
   if (s != "")
   {
-    preset = new() class'CRZMutator_LoadoutPreset';
+    preset = new() class'LoadoutPreset';
     ApplyOptionOverrides(s);
   }
   else
@@ -61,7 +61,7 @@ function InitMutator(string options, out string error)
     presetId = class'GameInfo'.static.ParseOption(options, OPT_LoadoutPreset);
     if (presetId == "")
       presetId = "Preset1";
-    preset = new(none, presetId) class'CRZMutator_LoadoutPreset';
+    preset = new(none, presetId) class'LoadoutPreset';
     RandomPresets = preset.RandomPresets;
   }
 
@@ -71,7 +71,7 @@ function InitMutator(string options, out string error)
   if (weapons.Length == 0)
   {
     // failsafe for bad config or preset name
-    preset = new() class'CRZMutator_LoadoutPreset';
+    preset = new() class'LoadoutPreset';
     preset.Ravager = true;
     preset.Raven = true;
     preset.AllowWeaponPickups = true;
@@ -188,7 +188,7 @@ function ModifyPlayer(Pawn p)
   if (RandomPresets != "") // load a random preset
   {
     i = rand(len(RandomPresets));
-    preset = new(none, "Preset" $ mid(RandomPresets, i, 1)) class'CRZMutator_LoadoutPreset';
+    preset = new(none, "Preset" $ mid(RandomPresets, i, 1)) class'LoadoutPreset';
     InitWeapons();
     for (i=0; i<weapons.length; i++)
       p.CreateInventory(weapons[i], true);
@@ -221,11 +221,11 @@ simulated function Tick(float DeltaTime)
 
 static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, optional CRZUIDataProvider_Mutator MutatorDataProvider)
 {
-  local CRZMutator_LoadoutPreset pres;
+  local LoadoutPreset pres;
 
   super.PopulateConfigView(ConfigView, MutatorDataProvider);
 
-  pres = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
+  pres = new(none, "Preset1") class'LoadoutPreset';
   ConfigView.SetMaskBounds(ConfigView.ListObject1, 400, 975, true);
   class'MutConfigHelper'.static.NotifyPopulated(class'CRZMutator_Loadout');
   class'MutConfigHelper'.static.AddCheckBox(ConfigView, "Random Preset", "Picks one of the predefined loadouts randomly", pres.RandomPresets != "", OnCheckboxClick);
@@ -245,9 +245,9 @@ static function PopulateConfigView(GFxCRZFrontEnd_ModularView ConfigView, option
 
 static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventData ev)
 {
-  local CRZMutator_LoadoutPreset pres;
+  local LoadoutPreset pres;
 
-  pres = new(none, "Preset1") class'CRZMutator_LoadoutPreset';
+  pres = new(none, "Preset1") class'LoadoutPreset';
 
   switch(label)
   {
@@ -274,4 +274,8 @@ defaultproperties
 {
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
+
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
 }

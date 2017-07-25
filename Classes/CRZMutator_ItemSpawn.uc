@@ -210,4 +210,7 @@ static function OnCheckboxClick(string label, bool value, GFxClikWidget.EventDat
 defaultproperties
 {
 //  GroupNames[0]="WEAPONRESPAWN"
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=false
 }

@@ -482,6 +482,10 @@ defaultproperties
   RemoteRole=ROLE_SimulatedProxy
   bAlwaysRelevant=true
  
+  bAllowMXPSave=true
+  bAllowSCSave=false
+  bRequiresDownloadOnClient=true
+
   bConfigWidgets=true
   bAllowDisableTick=true
 
